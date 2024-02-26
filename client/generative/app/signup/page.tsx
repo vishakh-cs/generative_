@@ -12,6 +12,12 @@ export default function signup() {
     const handdleForm = async (e) => {
         e.preventDefault();
 
+        if(e.target.password.value !== e.target.confirmPassword.value){
+            toast.error("Password does not match the confirm password");
+            return;
+        }
+            
+
         let userData = {
             Username: e.target.username.value,
             phonenumber: e.target.phonenumber.value,
