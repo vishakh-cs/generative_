@@ -6,5 +6,9 @@ var adminAuth = require('../controller/adminAuth')
 
 router.post('/admin-login',adminAuth.login)
 
+router.get('/userdata',adminAuth.userManagement)
+
+router.post('/blockuser/:userId', adminAuth.blockUser);
+
 
 module.exports = router;

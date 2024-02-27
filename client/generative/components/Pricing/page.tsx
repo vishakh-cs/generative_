@@ -20,7 +20,7 @@ export default function Pricing() {
        business, we have a range of plans to accommodate your requirements. 
       </p>
     </div>
-    <div className="grid max-w-md gap-10 row-gap-5 sm:row-gap-10 lg:max-w-screen-md lg:grid-cols-2 sm:mx-auto">
+    <div className="grid max-w-md gap-10 row-gap-5 dark:text-black sm:row-gap-10 lg:max-w-screen-md lg:grid-cols-2 sm:mx-auto">
       <div className="flex flex-col justify-between p-5 bg-white border rounded shadow-sm">
         <div className="mb-6">
           <div className="flex items-center justify-between pb-6 mb-6 border-b">
@@ -321,7 +321,7 @@ export default function Pricing() {
         <div>
           <a
             href="/"
-            className="inline-flex items-center justify-center w-full h-12 px-6 mb-4 font-medium tracking-wide text-black transition duration-200 rounded shadow-md bg-deep-purple-accent-400 hover:bg-deep-purple-accent-700 focus:shadow-outline focus:outline-none"
+            className="inline-flex items-center justify-center w-full h-12 px-6 mb-4 font-medium tracking-wide text-black transition bg-blue-200 duration-200 rounded shadow-md bg-deep-purple-accent-400 hover:bg-deep-purple-accent-700 focus:shadow-outline focus:outline-none"
           >
             Get started
           </a>

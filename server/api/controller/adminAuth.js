@@ -31,6 +31,43 @@ const login = async (req, res) => {
 };
 
 
+const userManagement = async (req, res) => {
+  try {
+  
+    const users = await UserModel.find({}, 'email username avatar isBlocked');
+
+    return res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error('Error fetching user data:', error.message);
+    return res.status(500).json({ success: false, msg: "Internal Server Error" });
+  }
+};
+
+
+const blockUser = async (req, res) => {
+  try {
+      const userId = req.params.userId;
+
+      // Find the user by ID
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      user.isBlocked = !user.isBlocked;
+
+      const updatedUser = await user.save();
+
+      return res.status(200).json({
+          success: true,
+          message: `User ${user.isBlocked ? 'blocked' : 'unblocked'} successfully`,
+          user: updatedUser,
+      });
+  } catch (error) {
+      console.error('Error blocking/unblocking user:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
 
 
 
@@ -38,4 +75,6 @@ const login = async (req, res) => {
 
 module.exports={
     login,
+    userManagement,
+    blockUser,
 }

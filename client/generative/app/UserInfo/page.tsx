@@ -65,7 +65,7 @@ export default function UserInfo() {
   
     return (
       <div className="flex flex-col items-center justify-center h-screen">
-        <h1>You are not logged in. Please log in.</h1>
+        <h1>Welcome user.</h1>
         <GoogleAuthButton />
       </div>
     );

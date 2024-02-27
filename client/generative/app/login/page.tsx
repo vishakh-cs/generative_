@@ -91,7 +91,7 @@ export default function login() {
 								type="email"
 								name="email"
 								placeholder="Enter Email Address"
-								className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
+								className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none dark:text-black"
 								autoFocus
 								autoComplete="required"
 							/>
@@ -104,7 +104,7 @@ export default function login() {
 								name="password"
 								placeholder="Enter Password"
 								minLength="6"
-								className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
+								className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none dark:text-black"
 								required
 							/>
 						</div>
