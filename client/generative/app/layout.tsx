@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <NextAuthProvider>
         {
-         (pathname !== '/login' && pathname !== '/signup') ?
+         (!pathname.includes('/Admin') && pathname !== '/login' && pathname !== '/signup') ?
           <Navbar />
           : null
         }

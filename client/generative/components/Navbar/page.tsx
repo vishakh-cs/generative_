@@ -42,14 +42,14 @@ export default function Navbar() {
   return (
     <header className="p-2 dark:bg-opacity-40 dark:bg-gray-700 dark:text-gray-100 fixed w-full top-0 z-50" style={{ backdropFilter: 'blur(20px)' }}>
       <div className="container flex justify-between h-16 mx-auto">
-        <a rel="noopener noreferrer" href="#" aria-label="Back to homepage" className="flex items-center p-2 transition duration-300 ease-in-out transform hover:scale-105">
+        <button onClick={()=>router.push('/')} rel="noopener noreferrer"  aria-label="Back to homepage" className="flex items-center p-2 transition duration-300 ease-in-out transform hover:scale-105">
           <Image className='h-full object-contain w-32'
             src="/Assets/White logo - no background.png"
             alt=""
             width={200}
             height={500}
           />
-        </a>
+        </button>
         <ul className="items-stretch hidden space-x-3 lg:flex">
           <li className="flex">
             <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? null : 'Product'}</a>

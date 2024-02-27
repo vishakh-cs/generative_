@@ -4,8 +4,33 @@ const crypto = require('crypto');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const path = require('path');
+const fs = require('fs');
+const cron = require('node-cron');
 
 
+
+const createToken = (_id)=>{
+  const jwtKey = process.env.JWT_SECRET;
+  return jwt.sign({_id},jwtKey,{expiresIn:"3d"});
+}
+
+
+// Schedule a task to run every 3 minute
+cron.schedule('* * * * *', async () => {
+  try {
+    const threeMinutesAgo = new Date(Date.now() -  3 *  60 *  1000); 
+    await UserModel.deleteMany({
+      isVerified: false,
+      createdAt: { $lt: threeMinutesAgo } 
+    });
+
+    console.log('Deleted unverified users older than  3 minutes.');
+  } catch (error) {
+    console.error('Error deleting unverified users:', error);
+  }
+});
 
 const signUp = async (req, res) => {
   try {
@@ -14,32 +39,75 @@ const signUp = async (req, res) => {
     // Check if the email is already registered
     const existingUser = await UserModel.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already registered.',
-      });
+      if (!existingUser.isVerified) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is already registered but not verified. Verification email has been sent.',
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is already registered and verified.',
+        });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const emailToken = crypto.randomBytes(64).toString('hex');
+
     const newUser = new UserModel({
-      username:UserName,
+      username: UserName,
       phone: phonenumber,
       email,
       password: hashedPassword,
+      emailToken,
+      hasEmailToken: true, 
     });
-
     // Save the new user to the database
     await newUser.save();
 
     console.log('User saved successfully.');
 
+     // Send verification email
+     const verificationLink = `${process.env.BASE_URL}/verify?token=${emailToken}`;
+     const emailTemplatePath = path.join(__dirname, '../public/EmailVerify/emailVerify.html');
+     const emailTemplate = fs.readFileSync(emailTemplatePath, 'utf-8');
+     const emailContent = emailTemplate.replace(/{username}/g, UserName).replace(/{verificationLink}/g, verificationLink);
+ 
+     const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.APP_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false, 
+      },
+    });
+
+    const mailOptions = {
+      from: "Generative",
+      to: email,
+      subject: 'Email Verification',
+      html: emailContent,
+    };
+
+    transporter.sendMail(mailOptions, async (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).send('Error sending email');
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
     return res.status(200).json({
       success: true,
       message: 'User signed up successfully.',
       user: {
         username: newUser.username,
         email: newUser.email,
+        
       },
     });
   } catch (error) {
@@ -52,6 +120,48 @@ const signUp = async (req, res) => {
 };
 
 
+const verifyEmail = async(req,res)=>{
+  try {
+    const { token } = req.query;
+
+    if(!token) return res.status(404).json("email not found ...");
+
+    const user = await UserModel.findOne({ emailToken: token });
+    if(user){
+      user.emailToken=null;
+      user.isVerified=true;
+      user.save();
+      const acceptHeader = req.headers.accept || "";
+      const isHtmlRequest = acceptHeader.includes("text/html");
+
+      if (isHtmlRequest) {
+        // Redirect to the specified page
+        return res.redirect(302, '../EmailVerify/redirectpage/redirectPage.html');
+      } else {
+        // Send JSON response
+        return res.status(200).json({
+          success: true,
+          data: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            token: token,
+            isVerified: user?.isVerified,
+          },
+          message: "Email verification successful.",
+        });
+      }
+    } else {
+      return res.status(404).json({ success: false, message: "Email verification failed. Invalid token." });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+
+
 const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -62,6 +172,13 @@ const Login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password.',
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email not verified. Please check your email for verification instructions.',
       });
     }
 
@@ -114,12 +231,17 @@ const googlelogin = async (req, res) => {
       user = new UserModel({
         email,
         username: userName,
+        isVerified: true,
       });
 
       // Save the new user to the database
       await user.save();
 
       console.log('New user saved successfully.');
+    }else {
+      // If the user already exists, update isVerified to true
+      user.isVerified = true;
+      await user.save();
     }
 
     // Generate a JWT token for the user
@@ -153,13 +275,9 @@ const googlelogin = async (req, res) => {
 
 const setToken = (req, res) => {
   try {
-    // Get user data from the request body or wherever it's stored
     const { userId, email } = req.body;
-
-    // Generate a JWT token for the user
     const token = jwt.sign({ userId, email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // Send the token as a response
     res.status(200).json({
       success: true,
       message: 'Token generated successfully.',
@@ -174,9 +292,15 @@ const setToken = (req, res) => {
   }
 };
 
+
+ 
+
+
+  
 module.exports = {
   signUp,
   Login,
   googlelogin,
-  setToken
+  setToken,
+  verifyEmail,
 };

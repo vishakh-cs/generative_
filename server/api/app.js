@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const MongodbUrl = process.env.MONGODBURL
 
-var indexRouter = require('./routes/index');
+var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 
 var app = express();
@@ -40,7 +40,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.use('/', adminRouter);
 app.use('/', usersRouter);
 
 // catch 404 and forward to error handler

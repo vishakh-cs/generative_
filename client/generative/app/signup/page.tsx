@@ -39,8 +39,8 @@ export default function signup() {
 
             if (response.data.success) {
                 console.log('Signup successful');
-                toast.success('Signup successful');
-                router.push('/login');
+                toast.success('Signup verification Mail has been Send to your Email');
+                // router.push('/login');
             } else {
                 console.error('Signup failed:', response.data.message);
                 toast.error(`Signup failed: ${response.data.message}`);
@@ -51,7 +51,7 @@ export default function signup() {
             if (error.response) {
                 
                 if (error.response.status === 400) {
-                    toast.error('Email is already registered.');
+                    toast.error('Email is already registered or Already send Verification Link to your Registered email, Please ckeck you email.');
                 } else {
                     toast.error('Signup failed. Please try again later.');
                 }
