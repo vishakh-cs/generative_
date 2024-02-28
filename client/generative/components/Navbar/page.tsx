@@ -28,12 +28,6 @@ export default function Navbar() {
     router.push('/login');
   };
 
-  const handleLogout = async () => {
-    destroyCookie(null, 'token');
-    await signOut({ redirect: false }); 
-    
-    router.push('/');
-  };
 
   if (loading) {
     return null;
@@ -74,14 +68,9 @@ export default function Navbar() {
           </li>
         </ul>
         <div className="items-center flex-shrink-0 hidden lg:flex">
-          {isLoggedIn ? (
-            <button onClick={handleLogout} className="self-center px-8 py-3 rounded transition duration-300 ease-in-out transform hover:scale-105">Logout</button>
-          ) : (
-            <>
+            
               <button onClick={handleLogin} className="self-center px-8 py-3 rounded transition duration-300 ease-in-out transform hover:scale-105">Login</button>
               <button onClick={handleSignup} className="self-center px-8 py-3 font-semibold rounded dark:bg-purple-800 dark:text-white transition duration-300 ease-in-out transform hover:scale-105">Sign up</button>
-            </>
-          )}
         </div>
         <button className="p-4 lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6 dark:text-gray-100">

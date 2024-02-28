@@ -32,13 +32,12 @@ export default function RootLayout({
   };
 
   const pathname = usePathname();
+  const showNavbar = pathname === '/';
   return (
     <html lang="en">
       <body className={`${inter.className} ${darkMode ? 'dark' : ''}`}>
-        <NextAuthProvider>
-          {!pathname.includes('/Admin') && pathname !== '/login' && pathname !== '/signup' ? (
-            <Navbar toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
-          ) : null}
+      <NextAuthProvider>
+          {showNavbar && <Navbar toggleDarkMode={toggleDarkMode} darkMode={darkMode} />}
           {children}
         </NextAuthProvider>
       </body>
