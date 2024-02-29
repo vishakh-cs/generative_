@@ -64,7 +64,7 @@ const signUp = async (req, res) => {
       emailToken,
       hasEmailToken: true, 
     });
-    // Save the new user to the database
+   
     await newUser.save();
 
     console.log('User saved successfully.');
@@ -135,7 +135,7 @@ const verifyEmail = async(req,res)=>{
       const isHtmlRequest = acceptHeader.includes("text/html");
 
       if (isHtmlRequest) {
-        // Redirect to the specified page
+       
         return res.redirect(302, '../EmailVerify/redirectpage/redirectPage.html');
       } else {
         // Send JSON response

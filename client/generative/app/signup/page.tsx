@@ -1,29 +1,66 @@
 "use client"
 import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { useRouter } from 'next/navigation'
-import React from 'react'
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function signup() {
+interface UserData {
+    Username: string;
+    phonenumber: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+}
+
+export default function Signup() {
+    const checkPasswordStrength = (password: string): number => {
+        const minLength = 6;
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+        let score = 0;
+        if (password.length >= minLength) score += 1;
+        if (hasLowerCase) score += 1;
+        if (hasNumbers) score += 1;
+        if (hasSpecialChars) score += 1;
+
+        return score;
+    };
+
+    const validatePhoneNumber = (phoneNumber: string): boolean => {
+        const phoneRegex = /^\d{10}$/;
+        return phoneRegex.test(phoneNumber);
+    };
 
     const router = useRouter();
+    const [message, setMessage] = useState<string | null>(null);
 
-    const handdleForm = async (e) => {
+    const handleForm = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
 
-        if(e.target.password.value !== e.target.confirmPassword.value){
-            toast.error("Password does not match the confirm password");
+        if (e.currentTarget.password.value !== e.currentTarget.confirmPassword.value) {
+            setMessage("Password does not match the confirm password");
             return;
         }
-            
 
-        let userData = {
-            Username: e.target.username.value,
-            phonenumber: e.target.phonenumber.value,
-            email: e.target.email.value,
-            password: e.target.password.value,
-            confirmPassword: e.target.confirmPassword.value,
+        const passwordStrength = checkPasswordStrength(e.currentTarget.password.value);
+
+        if (passwordStrength < 3) {
+            setMessage("Password is not strong enough. Please choose a stronger password including numbers and special characters.");
+            return;
+        }
+        const isPhoneNumberValid = validatePhoneNumber(e.currentTarget.phonenumber.value);
+        if (!isPhoneNumberValid) {
+            setMessage('Please enter a valid phone number ');
+            return;
+        }
+
+        let userData: UserData = {
+            Username: e.currentTarget.username.value,
+            phonenumber: e.currentTarget.phonenumber.value,
+            email: e.currentTarget.email.value,
+            password: e.currentTarget.password.value,
+            confirmPassword: e.currentTarget.confirmPassword.value,
         };
 
         console.log('Client-side userData:', userData);
@@ -39,30 +76,28 @@ export default function signup() {
 
             if (response.data.success) {
                 console.log('Signup successful');
-                toast.success('Signup verification Mail has been Send to your Email');
+                setMessage('Signup verification Mail has been sent to your Email 📧');
                 // router.push('/login');
             } else {
                 console.error('Signup failed:', response.data.message);
-                toast.error(`Signup failed: ${response.data.message}`);
+                setMessage(`Signup failed: ${response.data.message}`);
             }
         } catch (error) {
             console.error('Signup failed:', error.message);
-        
+
             if (error.response) {
-                
                 if (error.response.status === 400) {
-                    toast.error('Email is already registered or Already send Verification Link to your Registered email, Please ckeck you email.');
+                    setMessage('Email is already registered or Already sent Verification Link to your Registered email. Please check your email.');
                 } else {
-                    toast.error('Signup failed. Please try again later.');
+                    setMessage('Signup failed. Please try again later.');
                 }
             } else if (error.request) {
-                toast.error('No response from the server. Please try again later.');
+                setMessage('No response from the server. Please try again later.');
             } else {
-                toast.error('An error occurred. Please try again later.');
+                setMessage('An error occurred. Please try again later.');
             }
         }
-    }
-
+    };
 
     return (
         <section className="bg-white dark:bg-gray-900">
@@ -82,33 +117,34 @@ export default function signup() {
                             Let’s get you all set up so you can verify your personal account and begin setting up your profile.
                         </p>
 
+                        {message && (
+                            <div className="mt-4 text-lg text-red-600 dark:text-red-400">{message}</div>
+                        )}
 
-
-                        <form onSubmit={handdleForm} className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
+                        <form onSubmit={handleForm} className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
                             <div className="col-span-2">
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Full Name</label>
-                                <input type="text" name='username' placeholder="your Full name" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                                <input type="text" name='username' placeholder="your Full name" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Phone number</label>
-                                <input type="text" name='phonenumber' placeholder="XXX-XX-XXXX-XXX" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                                <input type="text" name='phonenumber' placeholder="XXX-XX-XXXX-XXX" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
                             </div>
-
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Email address</label>
-                                <input type="email" name='email' placeholder="myemail@example.com" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                                <input type="email" name='email' placeholder="myemail@example.com" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Password</label>
-                                <input type="password" name='password' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                                <input type="password" name='password' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Confirm password</label>
-                                <input type="password" name='confirmPassword' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                                <input type="password" name='confirmPassword' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
                             </div>
 
                             <button
@@ -126,7 +162,6 @@ export default function signup() {
                     </div>
                 </div>
             </div>
-            <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
         </section>
-    )
+    );
 }

@@ -9,6 +9,9 @@ import { MdPublish } from "react-icons/md";
 import { destroyCookie } from "nookies";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { parseCookies } from "nookies";
+import { useSession } from 'next-auth/react';
+
 
 
 export default function Home() {
@@ -17,6 +20,8 @@ export default function Home() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [userId, setUserId] = useState(null);
+    const { data: session } = useSession();
 
     const toggleDropdown = () => {
       setIsDropdownOpen((prev) => !prev);
@@ -38,6 +43,9 @@ export default function Home() {
 
   
     useEffect(() => {
+
+      const { userId } = parseCookies(); // Make sure to replace 'userId' with the actual cookie name
+      setUserId(userId);
       const timeout = setTimeout(() => {
         setIsLoading(false);
       }, 2000);
@@ -45,6 +53,12 @@ export default function Home() {
     }, []);
   
     console.log('Rendering Home:', isLoading);
+    console.log("i user id:",userId);
+
+    if (session) {
+      console.log('User Info:', session.user.name, session.user.email);
+    }
+    
   
     return (
       <ProtectedRoutes >

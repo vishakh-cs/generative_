@@ -12,9 +12,11 @@ export default function login() {
 	const [email, setEmail] = useState(null)
 	const [password, setPassword] = useState(null)
 
+
 	const router = useRouter();
 
 	const { status, data: session } = useSession();
+
 
 	useEffect(() => {
 		if (status === 'authenticated') {
@@ -39,13 +41,13 @@ export default function login() {
 		  console.log(response); 
 
 		  if (response.data.success) {
-			
+			router.push('/home');
 			const token = response.data.token;
 	  
 			// Set the token as a cookie
 			document.cookie = `token=${token}; path=/;`;
 	  
-			router.push('/home');
+			
 		  } else {
 			console.error('Login failed:', response.data.message);
 			toast.error(`Login failed: ${response.data.message}`);
@@ -66,6 +68,7 @@ export default function login() {
 		  }
 		}
 	  };
+
 
 	return (
 
