@@ -3,7 +3,8 @@ import React from 'react';
 import { Metadata } from 'next';
 import { usePathname } from 'next/navigation';
 import { Inter } from 'next/font/google';
-import Sidebar from '@/components/Sidebar/page';
+import Sidebar from '@/components/AdminSidebar/page';
+import AdminSidebar from '@/components/AdminSidebar/page';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -22,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {isAdminDashboard ? <Sidebar /> : null}
+        {isAdminDashboard ? <AdminSidebar /> : null}
         {children}
       </body>
     </html>

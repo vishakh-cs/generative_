@@ -10,6 +10,7 @@ const MongodbUrl = process.env.MONGODBURL
 
 var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
+var workspaceRouter  =require('./routes/workspace');
 
 var app = express();
 
@@ -42,6 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', adminRouter);
 app.use('/', usersRouter);
+app.use('/',workspaceRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

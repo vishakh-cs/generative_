@@ -46,25 +46,16 @@ export default function Navbar() {
         </button>
         <ul className="items-stretch hidden space-x-3 lg:flex">
           <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? null : 'Product'}</a>
+            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">Product</a>
           </li>
           <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? null : 'Pricing'}</a>
+            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">Pricing</a>
           </li>
           <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? null : 'About'}</a>
+            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">About</a>
           </li>
           <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? null : 'Resources'}</a>
-          </li>
-          <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? 'Collaborate' : null}</a>
-          </li>
-          <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? 'Share' : null}</a>
-          </li>
-          <li className="flex">
-            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">{isLoggedIn ? 'Publish' : null}</a>
+            <a rel="noopener noreferrer" href="#" className="flex items-center px-4 -mb-1 border-b-2 dark:border-transparent hover:dark:text-violet-400 hover:dark:border-violet-400 transition duration-300 ease-in-out transform hover:scale-105">Resources</a>
           </li>
         </ul>
         <div className="items-center flex-shrink-0 hidden lg:flex">

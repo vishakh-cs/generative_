@@ -11,9 +11,16 @@ router.post('/googlelogin',userAuth.googlelogin);
 
 router.post('/set-token',userAuth.setToken);
 
-router.post('/verifyEmail',userAuth.verifyEmail)
+router.post('/verifyEmail',userAuth.verifyEmail);
 
-router.get('/verify',userAuth.verifyEmail)
+router.post('/new-workspace',userAuth.createNewWorkSpace);
+
+router.post('/checkHaveWorkspace',userAuth.checkWorkspace);
+
+router.get('/verify',userAuth.verifyEmail);
+
+
+
 
 
 

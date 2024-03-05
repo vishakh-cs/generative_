@@ -7,14 +7,14 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useEffect } from 'react';
 import useUserStore from '@/Store';
 
-const Sidebar = () => {
+const AdminSidebar = () => {
   const  pathname = usePathname();
   const router = useRouter();
 
   const routes = [
     { path: '/Admin/adminDashboard', index: 0 },
     { path: '/Admin/usermanagement', index: 1 },
-    // Add more routes as needed
+    
   ];
 
 
@@ -89,4 +89,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { BiRefresh } from 'react-icons/bi';
 import axios from 'axios';
-import Sidebar from '@/components/Sidebar/page';
+import Sidebar from '@/components/AdminSidebar/page';
 import Loaders from '@/components/Loaders/page';
 import { UserData } from '@/app/type'; 
 import { toast } from 'react-toastify';

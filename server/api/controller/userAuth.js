@@ -1,5 +1,6 @@
 const express = require('express');
 const UserModel = require('../Model/userCollection');
+const Workspace = require('../Model/workspaceSchema');
 const crypto = require('crypto');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
@@ -8,22 +9,23 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
+const cookie = require('cookie');
 
 
 
-const createToken = (_id)=>{
+const createToken = (_id) => {
   const jwtKey = process.env.JWT_SECRET;
-  return jwt.sign({_id},jwtKey,{expiresIn:"3d"});
+  return jwt.sign({ _id }, jwtKey, { expiresIn: "3d" });
 }
 
 
 // Schedule a task to run every 3 minute
 cron.schedule('* * * * *', async () => {
   try {
-    const threeMinutesAgo = new Date(Date.now() -  3 *  60 *  1000); 
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
     await UserModel.deleteMany({
       isVerified: false,
-      createdAt: { $lt: threeMinutesAgo } 
+      createdAt: { $lt: threeMinutesAgo }
     });
 
     console.log('Deleted unverified users older than  3 minutes.');
@@ -62,27 +64,27 @@ const signUp = async (req, res) => {
       email,
       password: hashedPassword,
       emailToken,
-      hasEmailToken: true, 
+      hasEmailToken: true,
     });
-   
+
     await newUser.save();
 
     console.log('User saved successfully.');
 
-     // Send verification email
-     const verificationLink = `${process.env.BASE_URL}/verify?token=${emailToken}`;
-     const emailTemplatePath = path.join(__dirname, '../public/EmailVerify/emailVerify.html');
-     const emailTemplate = fs.readFileSync(emailTemplatePath, 'utf-8');
-     const emailContent = emailTemplate.replace(/{username}/g, UserName).replace(/{verificationLink}/g, verificationLink);
- 
-     const transporter = nodemailer.createTransport({
+    // Send verification email
+    const verificationLink = `${process.env.BASE_URL}/verify?token=${emailToken}`;
+    const emailTemplatePath = path.join(__dirname, '../public/EmailVerify/emailVerify.html');
+    const emailTemplate = fs.readFileSync(emailTemplatePath, 'utf-8');
+    const emailContent = emailTemplate.replace(/{username}/g, UserName).replace(/{verificationLink}/g, verificationLink);
+
+    const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.APP_PASSWORD,
       },
       tls: {
-        rejectUnauthorized: false, 
+        rejectUnauthorized: false,
       },
     });
 
@@ -107,7 +109,7 @@ const signUp = async (req, res) => {
       user: {
         username: newUser.username,
         email: newUser.email,
-        
+
       },
     });
   } catch (error) {
@@ -120,22 +122,22 @@ const signUp = async (req, res) => {
 };
 
 
-const verifyEmail = async(req,res)=>{
+const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
 
-    if(!token) return res.status(404).json("email not found ...");
+    if (!token) return res.status(404).json("email not found ...");
 
     const user = await UserModel.findOne({ emailToken: token });
-    if(user){
-      user.emailToken=null;
-      user.isVerified=true;
+    if (user) {
+      user.emailToken = null;
+      user.isVerified = true;
       user.save();
       const acceptHeader = req.headers.accept || "";
       const isHtmlRequest = acceptHeader.includes("text/html");
 
       if (isHtmlRequest) {
-       
+
         return res.redirect(302, '../EmailVerify/redirectpage/redirectPage.html');
       } else {
         // Send JSON response
@@ -191,24 +193,33 @@ const Login = async (req, res) => {
         message: 'Invalid email or password.',
       });
     }
-     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    const hasWorkspace = user.have_workspace;
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 1000,
-      sameSite: 'strict', 
+      sameSite: 'strict',
     });
-
-    // Include the token in the response
-    return res.status(200).json({
+    const responseData = {
       success: true,
       message: 'Login successful.',
       user: {
         username: user.username,
         email: user.email,
+        hasWorkspace,
       },
-    });
+      token: token,
+    };
+    if (hasWorkspace) {
+      const workspace = await Workspace.findOne({ owner: user._id });
+      responseData.redirectUrl = `/home/${workspace._id}`;
+    }
+
+    return res.status(200).json(responseData);
+
   } catch (error) {
     console.error('Error during login:', error.message);
     return res.status(500).json({
@@ -227,27 +238,21 @@ const googlelogin = async (req, res) => {
     let user = await UserModel.findOne({ email });
 
     if (!user) {
-      // If the user does not exist, create a new user instance
       user = new UserModel({
         email,
         username: userName,
         isVerified: true,
       });
-
-      // Save the new user to the database
       await user.save();
 
       console.log('New user saved successfully.');
-    }else {
-      // If the user already exists, update isVerified to true
+    } else {
       user.isVerified = true;
       await user.save();
     }
-
-    // Generate a JWT token for the user
     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // Set the JWT token as a cookie in the response
+    const hasWorkspace = user.have_workspace;
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -262,7 +267,9 @@ const googlelogin = async (req, res) => {
       user: {
         email: user.email,
         username: user.username,
+        hasWorkspace,
       },
+      redirectUrl: hasWorkspace ? '/home' : '/new-workspace',
     });
   } catch (error) {
     console.error('Error during Google login:', error.message);
@@ -292,15 +299,98 @@ const setToken = (req, res) => {
   }
 };
 
+const checkWorkspace = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
 
- 
+    if (user) {
+      const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+      const workspace = await Workspace.findOne({ owner: user._id });
+
+      res.json({
+        hasWorkspace: user.have_workspace,
+        workspaceId: workspace ? workspace._id : null,
+        token: token,
+      });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error checking workspace:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 
-  
+const createNewWorkSpace = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    console.log("tah", token);
+
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const userEmail = decodedToken.email;
+    console.log("ujjnd", userEmail);
+    // Validate if the required data is present
+    const { imageIndex, workspaceName } = req.body;
+    if (!userEmail || !imageIndex || !workspaceName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request. Missing required data.',
+      });
+    }
+
+    const user = await UserModel.findOne({ email: userEmail });
+
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    user.have_workspace = true;
+    user.save();
+    const newWorkspace = new Workspace({
+      name: workspaceName,
+      workspaceLogoIndex: imageIndex,
+      owner: user._id,
+      type: 'private',
+    });
+
+    await newWorkspace.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Workspace created successfully.',
+      workspace: {
+        name: newWorkspace.name,
+        owner: newWorkspace.owner,
+        type: newWorkspace.type,
+        createdAt: newWorkspace.createdAt,
+        workspaceId: newWorkspace._id,
+      },
+    });
+  } catch (error) {
+    console.error('Error creating workspace:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Error creating workspace',
+    });
+  }
+};
+
+
+
+
 module.exports = {
   signUp,
   Login,
   googlelogin,
   setToken,
   verifyEmail,
+  createNewWorkSpace,
+  checkWorkspace,
 };
