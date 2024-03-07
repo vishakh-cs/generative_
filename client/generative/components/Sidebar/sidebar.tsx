@@ -7,6 +7,9 @@ import { MoreVertical, ChevronLast, ChevronFirst } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HiOutlineLogout } from "react-icons/hi";
 import useStore from '@/Stores/store';
+import { IoMdAdd } from "react-icons/io";
+import PageNameModal from './PageNameModal';
+import { CiFileOn } from "react-icons/ci";
 
 interface SidebarContextProps {
   expanded: boolean;
@@ -22,19 +25,53 @@ const SidebarContext = createContext<SidebarContextProps | undefined>(undefined)
 export default function Sidebar({ children, params }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [pages, setPages] = useState<string[]>([]);
+  const [isModalOpen, setModalOpen] = useState(false);
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
+  const workspaceName = useStore((state) => state.workspaceName)
+
+  console.log("page", workspaces.page);
+
 
   const toggleSidebar = () => {
     setExpanded((curr) => !curr);
   };
 
+  const openModal = () => {
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
+
+  const addNewPage = () => {
+    openModal();
+  };
+
+  console.log("workspaces dfd", workspaces);
+
   useEffect(() => {
+    // fetch user and workspace data
     const fetchData = async () => {
       try {
+        if (!params.workspaceid) {
+          return;
+        }
+
         const response = await axios.post('http://localhost:8000/sidebar_data', {
           workspaceId: params.workspaceid,
         });
-        setUserData(response.data.data);
+
+        const { data, workspaces, pages } = response.data;
+
+        setUserData(data);
+        setWorkspaces(workspaces);
+        const selectedWorkspace = workspaces.find(w => w.id === params.workspaceid);
+
+        setPages(pages || []);
+
       } catch (error) {
         console.error('Error fetching user data:', error.message);
       }
@@ -42,6 +79,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
     fetchData();
   }, [params.workspaceId]);
+
 
   const createNewWorkspace = async () => {
     try {
@@ -54,6 +92,43 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const handleLogout = () => {
     setIsLogoutClicked(true);
   };
+
+  const handleModalSubmit = async (pageName) => {
+    const newPage = pageName.trim() || `Page ${pages.length + 1}`;
+    setPages((prevPages) => [...prevPages, newPage]);
+    console.log(`Added a new page: ${newPage}`);
+    closeModal();
+
+    try {
+      await axios.post('http://localhost:8000/add_page', {
+        workspaceId: params.workspaceid,
+        pageName: newPage,
+      });
+    } catch (error) {
+      console.error('Error updating workspace with new page:', error.message);
+    }
+  };
+
+
+
+  const imgPaths = [
+    "/Assets/workspace1.jpg",
+    "/Assets/workspace2.jpg",
+    "/Assets/workspace3.jpg",
+    "/Assets/workspace4.jpg",
+    "/Assets/briefcase_439354.png",
+    "/Assets/workspace5.webp",
+    "/Assets/workspace6.png",
+    "/Assets/workspace7.webp",
+    "/Assets/workspace8.png",
+    "/Assets/workspace9.webp",
+    "/Assets/workspace10.png",
+    "/Assets/workspace11.png",
+    "/Assets/workspace12.png",
+    "/Assets/workspace13.jpg",
+    "/Assets/workspace14.png",
+  ];
+
 
   return (
     <aside className={twMerge('h-screen')}>
@@ -74,13 +149,61 @@ export default function Sidebar({ children, params }: SidebarProps) {
           </button>
         </div>
         {expanded && (
-          <button
-            onClick={createNewWorkspace}
-            className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
-          >
-            <span className={twMerge('text-gray-600 dark:text-gray-300')}>Create New Workspace +</span>
-          </button>
+          <>
+            <button
+              onClick={createNewWorkspace}
+              className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
+            >
+              <span className={twMerge('text-gray-600 dark:text-gray-300')}>Create New Workspace +</span>
+            </button>
+            {workspaces.map((workspace, index) => (
+              <button
+                key={workspace.id}
+                onClick={() => console.log(`Switch to workspace: ${workspace.name}`)}
+                className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
+              >
+                {workspace.workspaceLogoIndex != null && (
+                  <Image
+                    src={imgPaths[workspace.workspaceLogoIndex]}
+                    alt={`Workspace Logo ${index}`}
+                    width={20}
+                    height={20}
+                  />
+                )}
+                <span className={twMerge('flex justify-between items-center w-full')}>
+                  <span className={twMerge('text-gray-600 dark:text-gray-300 ml-4')}>
+                    {workspace.name}
+                  </span>
+                  <IoMdAdd
+                    onClick={addNewPage}
+                    size={16}
+                    className='ml-4 mt-1' />
+                </span>
+
+              </button>
+
+            ))}
+            {pages && pages.map((page, pageIndex) => (
+              <button
+                key={pageIndex}
+                className={twMerge('border-t flex justify-between items-center p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
+              >
+                <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
+                  {page}
+                </span>
+                <CiFileOn size={20} className="ml-auto" />
+              </button>
+            ))}
+
+            {isModalOpen && (
+              <PageNameModal
+                onClose={closeModal}
+                onSubmit={handleModalSubmit}
+              />
+            )}
+          </>
         )}
+
 
         <SidebarContext.Provider value={{ expanded }}>
           <ul className={twMerge('flex-1 px-3 dark:text-white')}>{children}</ul>
@@ -131,9 +254,9 @@ export function SidebarItem({ icon, text, active, alert }: SidebarItemProps) {
         font-medium rounded-md cursor-pointer
         transition-colors group
         ${active
-        ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800 dark:bg-gray-700 dark:text-white"
-        : "hover:bg-indigo-50 text-gray-600 dark:hover:bg-gray-600 dark:text-gray-300"
-      }
+          ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800 dark:bg-gray-700 dark:text-white"
+          : "hover:bg-indigo-50 text-gray-600 dark:hover:bg-gray-600 dark:text-gray-300"
+        }
     `)}
     >
       {icon}

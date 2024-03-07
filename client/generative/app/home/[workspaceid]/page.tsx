@@ -3,13 +3,16 @@ import React from 'react'
 import useStore from '@/Stores/store'
 import LogoutModal from '@/components/Sidebar/LogoutModal';
 import ProtectedRoutes from '@/components/ProtectedRoutes/page';
+import BannerImage from '@/components/workspaceBanner/BannerImage';
 
 export default function workspaceid({params}) {
 
   const isLogoutClicked = useStore((state) => state.isLogoutClicked);
   const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
+  
 
   console.log('isLogoutClicked:', isLogoutClicked);
+
   return (
     <ProtectedRoutes >
     <div className='bg-workspaceColor h-screen'>
@@ -17,7 +20,8 @@ export default function workspaceid({params}) {
         <LogoutModal  onClose={() => resetLogoutClicked()} />
       ) : (
         <>
-          <div>workspaceid{params.workspaceid}</div>
+          <div className='opacity-60'>workspaceid{params.workspaceid}</div>
+          <BannerImage  workspaceId={params.workspaceid}/>       
          
         </>
       )}

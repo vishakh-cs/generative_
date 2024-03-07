@@ -18,6 +18,10 @@ const workspaceSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  BannerImage :{
+    type: String,
+    default :null,
+  },
   collaborators: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -27,6 +31,9 @@ const workspaceSchema = new mongoose.Schema({
     enum: ['private', 'shared'],
     default: 'private',
   },
+  pages: [{
+    type: String, 
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

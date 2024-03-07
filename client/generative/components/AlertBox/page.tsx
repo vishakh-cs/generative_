@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import useStore from '@/Stores/store';
 
 export default function AlertBox() {
   const imgPaths = [
@@ -11,8 +12,19 @@ export default function AlertBox() {
     "/Assets/workspace2.jpg",
     "/Assets/workspace3.jpg",
     "/Assets/workspace4.jpg",
-    "/Assets/briefcase_439354.png"
+    "/Assets/briefcase_439354.png",
+    "/Assets/workspace5.webp",
+    "/Assets/workspace6.png",
+    "/Assets/workspace7.webp",
+    "/Assets/workspace8.png",
+    "/Assets/workspace9.webp",
+    "/Assets/workspace10.png",
+    "/Assets/workspace11.png",
+    "/Assets/workspace12.png",
+    "/Assets/workspace13.jpg",
+    "/Assets/workspace14.png",
   ];
+
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
@@ -60,6 +72,8 @@ export default function AlertBox() {
 
         const workspaceId = response.data.workspace.workspaceId;
         console.log("my workspace",workspaceId);
+
+        useStore.getState().setWorkspaceName(workspaceName);
         
         router.replace(`/home/${workspaceId}`);
 

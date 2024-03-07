@@ -6,7 +6,7 @@ interface LayoutProps {
     params: any;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, params }) => {
+const Layout: React.FC<LayoutProps> = ({ children, params }) => { 
     return (
         <main className='flex overflow-hidden h-screen w-screen'>
            <Sidebar params={params} />
