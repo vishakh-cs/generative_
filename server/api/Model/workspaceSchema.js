@@ -1,7 +1,7 @@
-// workspace schema
-
+// page schema
 const mongoose = require('mongoose');
 
+// workspace schema
 const workspaceSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -10,7 +10,7 @@ const workspaceSchema = new mongoose.Schema({
   description: {
     type: String,
   },
-  workspaceLogoIndex:{
+  workspaceLogoIndex: {
     type: Number,
   },
   owner: {
@@ -18,10 +18,7 @@ const workspaceSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  BannerImage :{
-    type: String,
-    default :null,
-  },
+
   collaborators: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -32,15 +29,14 @@ const workspaceSchema = new mongoose.Schema({
     default: 'private',
   },
   pages: [{
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Page',
   }],
   createdAt: {
     type: Date,
     default: Date.now,
   },
-
 });
 
 const Workspace = mongoose.model('Workspace', workspaceSchema);
-
-module.exports = Workspace;
+module.exports = Workspace; 

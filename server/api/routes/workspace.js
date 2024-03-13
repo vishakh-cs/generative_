@@ -24,13 +24,29 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post('/bannerImage', upload.single('banner'), workspaceController.bannerImageUpload);
+router.post('/BannerImageURL', workspaceController.bannerImageUpload);
 
 router.post('/sidebar_data',workspaceController.sidebarUser)
 
-router.get('/workspace/:workspaceId',workspaceController.fechUserData);
+router.get('/workspace/:workspaceId/:pageId',workspaceController.fechUserData);
 
 router.post('/add_page',workspaceController.addPage)
+
+router.get('/get_page/:pageId',workspaceController.getPage);
+
+router.get('/find_collab_user',workspaceController.searchCollabUsers); 
+
+router.post('/send_email_notification',workspaceController.sendEmailInvite);
+
+router.post('/change_workspace_type',workspaceController.updateWorkspaceType);
+
+router.get('/get_workspace_data/:workspaceId', workspaceController.getWorkspaceType);
+
+router.get('/add_collab/:userEmail/:workspaceId', workspaceController.addCollabUser);
+
+
+
+
 
 
 

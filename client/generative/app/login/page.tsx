@@ -7,10 +7,20 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import useStore from '@/Stores/store';
 
-export default function login() {
 
-	const [errorMessage, setErrorMessage] = useState(null);
+interface LoginProps {}
+
+const Login: React.FC<LoginProps> = () => {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [WorkspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [collabWorkspace, setCollabWorkspace] = useState<any>(null);
+  const setCollaboratorWorkspace = useStore((state) => state.setCollaboratorWorkspace);
+
+  const collaboratorWorkspace = useStore((state) => state.collaboratorWorkspace);
+
+  const setUserEmail = useStore((state) => state.setUserEmail);
 
 
 	const router = useRouter();
@@ -19,10 +29,13 @@ export default function login() {
 
 
 	useEffect(() => {
-		if (status === 'authenticated') {
-			router.push('/home');
+		if (status === 'authenticated' && !WorkspaceId) {
+		  router.push('/new_workspace');
+		} else if (status === 'authenticated' && WorkspaceId) {
+		  router.push(`/home/${WorkspaceId}`);
 		}
-	}, [session, status, router]);
+	  }, [status, WorkspaceId, router]);
+	  
 
 	// if the googleLogin user has workspace
 	useEffect(() => {
@@ -38,26 +51,40 @@ export default function login() {
 				document.cookie = `token=${token}; path=/;`;
 			  }
 			  if (userInfo.data.hasWorkspace) {
+				setWorkspaceId(userInfo.data.workspaceId);
+				setCollabWorkspace(userInfo.data.collaboratorWorkspace);
+				setUserEmail(userInfo.data.userEmail);
+                setCollaboratorWorkspace(userInfo.data.collaboratorWorkspace);
+
 				router.push(`/home/${userInfo.data.workspaceId}`);
 			  } else {
 				router.push('/new_workspace');
 			  }
-			} catch (error) {
+			} catch  (error: any) {
 			  console.error('Error checking workspace:', error.message);
 			}
 		  }
 		};
 	
 		checkWorkspace();
-	  }, [session, router]);
+	  }, [session, router,setCollaboratorWorkspace ,setUserEmail]);
 
 
-	const handleLogin = async (e) => {
+	  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		const formData = new FormData(e.target);
-		const email = formData.get('email');
-		const password = formData.get('password');
+		const formData = new FormData(e.currentTarget);
+		const email = formData.get('email') as string;
+		const password = formData.get('password')as string;
+
+		  // Check if email and password are provided
+		  if (!email || !password) {
+			setErrorMessage('Please enter both email and password.');
+			setTimeout(() => {
+			  setErrorMessage(null);
+			}, 3000);
+			return;
+		  }
 
 		try {
 			const response = await axios.post('http://localhost:8000/login', {
@@ -89,7 +116,7 @@ export default function login() {
 					setErrorMessage(null);
 				}, 3000);
 			}
-		} catch (error) {
+		} catch (error:any) {
 			console.error('Login failed:', error.message);
 
 			if (error.response) {
@@ -154,7 +181,7 @@ export default function login() {
 								type="password"
 								name="password"
 								placeholder="Enter Password"
-								minLength="6"
+								minLength={6}
 								className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none dark:text-black"
 								required
 							/>
@@ -197,3 +224,4 @@ export default function login() {
 
 	)
 }
+export default Login;

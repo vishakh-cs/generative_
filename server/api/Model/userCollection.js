@@ -19,6 +19,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     
   },
+  profileImageUrl:{
+    type: String,
+  },
   isVerified: {
     type: Boolean,
     default: false

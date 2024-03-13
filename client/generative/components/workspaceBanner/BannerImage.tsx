@@ -1,26 +1,48 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
+import { useEdgeStore } from '@/lib/edgestore';
+import { BannerSkeleton } from '../Loaders/bannerSkelton/page';
 
-const loader = ({ src, width, quality }) => {
-  return `${process.env.NEXT_PUBLIC_IMAGE_SERVER || ''}${src}?w=${width}&q=${quality || 75}`;
+interface BannerImageProps {
+  workspaceId: string;
+  pageId: string;
+}
+
+const loader = ({ src, width, quality }: { src: string; width?: number; quality?: number }) => {
+  if (src.startsWith('/')) {
+    return src;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_SERVER || '';
+  const url = new URL(src, baseUrl);
+  url.searchParams.set('w', width?.toString() || '');
+  url.searchParams.set('q', quality?.toString() || '75');
+
+  url.searchParams.set('t', Date.now().toString());
+
+  return url.toString();
 };
 
-const BannerImage = ({ workspaceId }) => {
-  const fileInputRef = useRef(null);
-  const [selectedFile, setSelectedFile] = useState(null);
 
-  const [workspace, setWorkspace] = useState(null);
-  const [forceUpdate, setForceUpdate] = useState(false);
+const BannerImage: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [workspace, setWorkspace] = useState<any | null>(null);
+  const [forceUpdate, setForceUpdate] = useState<boolean>(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
 
-  console.log('BannerImage:', workspace);
-  const notify = () => toast('Here is your toast.');
+  const { edgestore } = useEdgeStore();
+
+  console.log("my workspace workspace", workspace);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/workspace/${workspaceId}`);
+        const response = await axios.get(`http://localhost:8000/workspace/${workspaceId}/${pageId}`);
         setWorkspace(response.data);
       } catch (error) {
         console.error('Error fetching workspace:', error.message);
@@ -30,62 +52,104 @@ const BannerImage = ({ workspaceId }) => {
     fetchWorkspace();
   }, [workspaceId, forceUpdate]);
 
-  if (!workspace) {
-    return null;
-  }
-
   const handleAddBannerClick = () => {
-    fileInputRef.current.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setSelectedFile(file);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setSelectedFile(file || null);
   };
+
 
   const handleUpload = async () => {
     try {
       if (!selectedFile) {
-        toast.error('No file provided !');
+        toast.error('No file provided!');
         return;
       }
-
-      const formData = new FormData();
-
-      formData.append('workspaceId', workspaceId);
-      formData.append('banner', selectedFile);
-
-      const response = await axios.post('http://localhost:8000/bannerImage', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+      setUploading(true);
+      setFile(selectedFile);
+  
+      // Delete the old image
+      if (workspace.page.PageBannerImage) {
+        await edgestore.publicFiles.delete(workspace.page.PageBannerImage);
+      }
+  
+      // Upload the new image to Edge Store
+      const res = await edgestore.publicFiles.upload({
+        file: selectedFile,
+        options: {
+          
+        },
+        onProgressChange: (progress) => {
+          console.log(progress);
         },
       });
-      setSelectedFile(null);
+  
+      // Fetch updated workspace data with the new image URL
+      const updatedWorkspace = await axios.post('http://localhost:8000/BannerImageURL', {
+        workspaceId,
+        pageId,
+        imageUrl: res.url,
+      });
+  
+      setWorkspace(updatedWorkspace.data);
+      
       setForceUpdate((prev) => !prev);
-      console.log('Response12356:', response.data);
+  
+      console.log('Image uploaded to Edge Store:', res.url);
+      
+      setSelectedFile(null);
       toast.success('Image uploaded successfully!');
-
-    } catch (error) {
+    } catch (error :any) {
       console.error('Error uploading image:', error.message);
       toast.error('Error uploading image');
+    } finally {
+      setUploading(false);
     }
   };
+  const memoizedImage = useMemo(() => {
+    return (
+      <>
+        {uploading ? (
+          <BannerSkeleton />
+        ) : (
+          <>
+            {workspace?.page?.PageBannarImage ? (
+              <Image
+                key={uploadedImage}
+                loader={loader}
+                src={workspace.page.PageBannarImage}
+                alt="Page Banner Image"
+                width={800}
+                height={100}
+                className="w-full h-full"
+              />
+            ) : (
+              <Image
+                loader={loader}
+                src="/Assets/defaultBanner.png"
+                alt="Default Banner Image"
+                width={800}
+                height={100}
+                className="w-full h-full"
+              />
+            )}
+          </>
+        )}
+      </>
+    );
+  }, [uploading, workspace, uploadedImage]);
+  
 
+  console.log('Rendering component');
 
   return (
     <div className="bg-gray-100 font-sans h-72">
-      <div className="relative bg-cover bg-center h-72">
-        {workspace.BannerImage && (
-          <Image
-          loader={loader}
-          src={workspace.BannerImage}
-          alt="Banner Image"
-          width={800}
-          height={100}
-          className="w-full h-full"
-        />
-        )}
-      </div>
+      <div className="relative bg-cover bg-center h-72">{memoizedImage}</div>
       <button
         onClick={handleAddBannerClick}
         className="font-medium opacity-45 text-sm p-2"

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { NextAuthProvider } from './provider';
+import { EdgeStoreProvider } from '@/lib/edgestore';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -37,8 +38,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} ${darkMode ? 'dark' : ''}`}>
       <NextAuthProvider>
+      <EdgeStoreProvider>
           {showNavbar && <Navbar toggleDarkMode={toggleDarkMode} darkMode={darkMode} />}
           {children}
+          </EdgeStoreProvider>
         </NextAuthProvider>
       </body>
     </html>

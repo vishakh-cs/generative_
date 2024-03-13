@@ -10,5 +10,7 @@ router.get('/userdata',adminAuth.userManagement)
 
 router.post('/blockuser/:userId', adminAuth.blockUser);
 
+router.get('/searchuser/:searchTerm',adminAuth.searchUsers);
+
 
 module.exports = router;

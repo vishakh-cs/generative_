@@ -307,11 +307,20 @@ const checkWorkspace = async (req, res) => {
     if (user) {
       const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+
       const workspace = await Workspace.findOne({ owner: user._id });
+      console.log("im wkr",workspace);
+
+       // Find the workspace where the user is a collaborator
+       collaboratorWorkspace = await Workspace.findOne({ collaborators: user._id });
+
+       console.log("collaboratorWorkspace",collaboratorWorkspace);
 
       res.json({
+        userEmail:user.email,
         hasWorkspace: user.have_workspace,
         workspaceId: workspace ? workspace._id : null,
+        collaboratorWorkspace: collaboratorWorkspace || null,
         token: token,
       });
     } else {
@@ -326,12 +335,34 @@ const checkWorkspace = async (req, res) => {
 
 const createNewWorkSpace = async (req, res) => {
   try {
-    const token = req.headers.authorization.split(' ')[1];
-    console.log("tah", token);
 
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    const userEmail = decodedToken.email;
-    console.log("ujjnd", userEmail);
+    let userEmail ;
+
+    // Check if the request have user
+    if (req.body.user) {
+      userEmail = req.body.user.email;
+      console.log("ujjnd", userEmail);
+    } else {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized. Missing or invalid Authorization header.',
+        });
+      }
+
+      // Extract the token from the headers
+      const token = authHeader.split(' ')[1];
+      console.log("tah", token);
+
+      // Verify the token and extract the user email
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Decoded token:', decodedToken);
+
+      userEmail = decodedToken.email;
+      console.log("ujjnd", userEmail);
+    }
+
     // Validate if the required data is present
     const { imageIndex, workspaceName } = req.body;
     if (!userEmail || !imageIndex || !workspaceName) {
@@ -342,7 +373,6 @@ const createNewWorkSpace = async (req, res) => {
     }
 
     const user = await UserModel.findOne({ email: userEmail });
-
 
     if (!user) {
       return res.status(404).json({
@@ -382,8 +412,22 @@ const createNewWorkSpace = async (req, res) => {
   }
 };
 
+const setProfileUrl=async(req,res)=>{
+  const { profileImage ,emailId } = req.body;
 
+  try {
+    const updatedUser = await UserModel.findOneAndUpdate({ email: emailId }, { profileImageUrl: profileImage }, { new: true });
 
+    if (updatedUser) {
+      return res.json({ success: true, message: 'Profile image URL updated successfully' });
+    } else {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error setting profile image URL:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
 
 module.exports = {
   signUp,
@@ -393,4 +437,6 @@ module.exports = {
   verifyEmail,
   createNewWorkSpace,
   checkWorkspace,
+  setProfileUrl,
+  
 };

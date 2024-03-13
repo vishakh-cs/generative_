@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 
-const ADMIN_PASS = "alwaysAdmin"
+const ADMIN_PASS = "admin"
 const ADMIN_EMAIL = "admin@gmail.com";
 
 const login = async (req, res) => {
@@ -14,6 +14,10 @@ const login = async (req, res) => {
 
     let { email, password } = req.body;
     console.log(email, password);
+
+    if(!email ===ADMIN_EMAIL && !password === ADMIN_PASS){
+      return res.status(401).json({ success: false, msg: "Invalid email or password" });
+    }
 
     if (email ===ADMIN_EMAIL && password === ADMIN_PASS) {
 
@@ -69,6 +73,30 @@ const blockUser = async (req, res) => {
 };
 
 
+const searchUsers = async(req,res)=>{
+  try {
+    const searchTerm = req.params.searchTerm;
+    
+    // Search for the user by username or email
+    const user = await UserModel.find({
+      $or:[
+        { username: { $regex: searchTerm, $options: 'i' } }, 
+        { email: { $regex: searchTerm, $options: 'i' } },  
+      ]
+
+    });
+    
+    if (user) {
+      res.status(200).json({ user });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error searching for user:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
 
 
 
@@ -76,4 +104,5 @@ module.exports={
     login,
     userManagement,
     blockUser,
+    searchUsers,
 }

@@ -1,3 +1,4 @@
+//Sidebar/sidebar.tsx
 "use client"
 import axios from 'axios';
 import Image from 'next/image';
@@ -10,6 +11,13 @@ import useStore from '@/Stores/store';
 import { IoMdAdd } from "react-icons/io";
 import PageNameModal from './PageNameModal';
 import { CiFileOn } from "react-icons/ci";
+import ProfileSlider from './ProfileSlider/page';
+import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
+import { MdOutlineSettingsSuggest } from "react-icons/md";
+import Settings from './Settings';
+import './sidebar.css'; 
+import { SettingsSlider } from './SettingsSlider/page';
 
 interface SidebarContextProps {
   expanded: boolean;
@@ -28,11 +36,16 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [pages, setPages] = useState<string[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [Page_id, setPage_id] = useState<string[] | null>(null!);
+  const [selectedPage, setSelectedPage] = useState<null | string>(null);
+  const [isSettingsOpen, setSettingsOpen] = useState(false); 
+  const [workspaceid,setWorkspaceId]=useState('');
+
+
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
-  const workspaceName = useStore((state) => state.workspaceName)
+  const workspaceName = useStore((state) => state.workspaceName);
 
-  console.log("page", workspaces.page);
-
+  const router = useRouter();
 
   const toggleSidebar = () => {
     setExpanded((curr) => !curr);
@@ -50,7 +63,6 @@ export default function Sidebar({ children, params }: SidebarProps) {
     openModal();
   };
 
-  console.log("workspaces dfd", workspaces);
 
   useEffect(() => {
     // fetch user and workspace data
@@ -64,15 +76,24 @@ export default function Sidebar({ children, params }: SidebarProps) {
           workspaceId: params.workspaceid,
         });
 
-        const { data, workspaces, pages } = response.data;
+        const { data, workspaces, pages: pageIds } = response.data;
 
+        setPage_id(pageIds)
+        setWorkspaceId(params.workspaceid)
         setUserData(data);
         setWorkspaces(workspaces);
         const selectedWorkspace = workspaces.find(w => w.id === params.workspaceid);
 
-        setPages(pages || []);
+        // Fetch page details based on the received page IDs
+        const pageDetailsPromises = pageIds.map(async (pageId) => {
+          const pageResponse = await axios.get(`http://localhost:8000/get_page/${pageId}`);
+          return pageResponse.data.PageName;
+        });
+        // Wait for all promises to resolve and then set the pages state
+        const resolvedPages = await Promise.all(pageDetailsPromises);
+        setPages(resolvedPages);
 
-      } catch (error) {
+      } catch (error:any) {
         console.error('Error fetching user data:', error.message);
       }
     };
@@ -93,21 +114,49 @@ export default function Sidebar({ children, params }: SidebarProps) {
     setIsLogoutClicked(true);
   };
 
-  const handleModalSubmit = async (pageName) => {
-    const newPage = pageName.trim() || `Page ${pages.length + 1}`;
-    setPages((prevPages) => [...prevPages, newPage]);
-    console.log(`Added a new page: ${newPage}`);
-    closeModal();
-
-    try {
-      await axios.post('http://localhost:8000/add_page', {
-        workspaceId: params.workspaceid,
-        pageName: newPage,
-      });
-    } catch (error) {
-      console.error('Error updating workspace with new page:', error.message);
+  const handleProfileClick = (pageId: string) => {
+    if (pageId) {
+      router.replace(`/home/${params.workspaceid}/${pageId}`);
+      setSelectedPage(pageId);
+    } else {
+      console.error('Invalid pageId:', pageId);
     }
   };
+
+
+  const handleModalSubmit = async (pageName: string) => {
+    try {
+      const newPage = pageName.trim() || `Page ${pages.length + 1}`;
+      setPages((prevPages) => [...prevPages, newPage]);
+
+      console.log(`Added a new page: ${newPage}`);
+
+      const response = await axios.post('http://localhost:8000/add_page', {
+        workspaceId: params.workspaceid,
+        pageName: newPage,
+        pageContent: '',
+      });
+
+      const { pageId } = response.data;
+
+      // Update Page_id state with the new pageId
+      setPage_id((prevPageIds) => [...(prevPageIds || []), pageId]);
+
+      toast.success(`Page "${newPage}" created successfully!`);
+
+      closeModal();
+    } catch (error) {
+      console.error('Error updating workspace with new page:', (error as Error).message);
+      toast.error('Error creating new page');
+    }
+  };
+
+
+  const expandedSidebarClass = 'w-32';
+  const collapsedSidebarClass = 'w-0';
+  const transitionClass = 'transition-all duration-300 ease-in-out';
+  const buttonBaseClass = 'border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700';
+  const selectedPageClass = 'bg-indigo-200 text-indigo-800 dark:bg-gray-700 dark:text-white';
 
 
 
@@ -168,32 +217,49 @@ export default function Sidebar({ children, params }: SidebarProps) {
                     alt={`Workspace Logo ${index}`}
                     width={20}
                     height={20}
+                    loading="lazy"
                   />
                 )}
                 <span className={twMerge('flex justify-between items-center w-full')}>
                   <span className={twMerge('text-gray-600 dark:text-gray-300 ml-4')}>
                     {workspace.name}
                   </span>
+                  <span className='flex justify-between'>
+                    <SettingsSlider workspaceId={workspaceid} workspaceName={workspace.name} 
+                    workspaceLogoIndex={workspace.workspaceLogoIndex} 
+                    workspaceType={workspace.type}/>
+                 
                   <IoMdAdd
                     onClick={addNewPage}
                     size={16}
                     className='ml-4 mt-1' />
+                    </span>
                 </span>
 
               </button>
 
             ))}
-            {pages && pages.map((page, pageIndex) => (
-              <button
-                key={pageIndex}
-                className={twMerge('border-t flex justify-between items-center p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
-              >
-                <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
-                  {page}
-                </span>
-                <CiFileOn size={20} className="ml-auto" />
-              </button>
-            ))}
+             <div className="sidebar-content overflow-y-auto max-h-96">
+  
+              {pages && pages.map((page, pageIndex) => (
+                <button
+                  key={pageIndex}
+                  className={twMerge(`
+                    ${buttonBaseClass}
+                    ${transitionClass}
+                    ${Page_id !== null && selectedPage === Page_id[pageIndex] ? selectedPageClass : ''}
+                  `)}
+                  onClick={() => Page_id && handleProfileClick(Page_id[pageIndex])}
+
+                >
+                  <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
+                    {page}
+                  </span>
+                  <CiFileOn size={20} className="ml-auto" />
+                </button>
+              ))}
+              <div className="h-20 sticky inset-x-0 bottom-0  bg-gradient-to-t from-sidebar to-transparent"></div>
+            </div>
 
             {isModalOpen && (
               <PageNameModal
@@ -210,10 +276,8 @@ export default function Sidebar({ children, params }: SidebarProps) {
         </SidebarContext.Provider>
 
         <div className={twMerge('border-t flex p-3')}>
-          <Avatar>
-            <AvatarImage src={userData?.profileImage} />
-            <AvatarFallback>{userData?.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <ProfileSlider avatarData={userData} />
+
           <div
             className={twMerge(`
               flex justify-between items-center
@@ -245,7 +309,7 @@ interface SidebarItemProps {
 }
 
 export function SidebarItem({ icon, text, active, alert }: SidebarItemProps) {
-  const { expanded } = useContext(SidebarContext);
+  const { expanded } = useContext(SidebarContext!) || { expanded: false };
 
   return (
     <li

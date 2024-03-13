@@ -19,6 +19,10 @@ router.post('/checkHaveWorkspace',userAuth.checkWorkspace);
 
 router.get('/verify',userAuth.verifyEmail);
 
+// router.post('/checkNewWorkspace', userAuth.checkNewWorkspaceorNot);
+
+router.post('/setProfileImageUrl',userAuth.setProfileUrl);
+
 
 
 

@@ -5,8 +5,13 @@ import Image from 'next/image';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import useStore from '@/Stores/store';
+import { useSession } from 'next-auth/react';
+import Loaders from '../Loaders/page';
 
-export default function AlertBox() {
+interface AlertBoxProps {}
+
+const AlertBox: React.FC<AlertBoxProps> = () => {
+
   const imgPaths = [
     "/Assets/workspace1.jpg",
     "/Assets/workspace2.jpg",
@@ -27,10 +32,13 @@ export default function AlertBox() {
 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { status, data: session } = useSession();
 
-  const inputRef = useRef(null);
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -50,44 +58,67 @@ export default function AlertBox() {
   };
 
   const handleCreateWorkspace = async () => {
-    if (selectedImageIndex !== null) {
-      const workspaceName = inputRef.current.value; 
-      console.log("wsp",workspaceName);
+  if (selectedImageIndex !== null) {
+    const workspaceName = inputRef.current ?.value??'';
+    console.log("wsp",workspaceName);
 
-      try {
+    try {
 
-        const token = document.cookie.replace(/(?:(?:^|.*;\s*)token\s*=\s*([^;]*).*$)|^.*$/, "$1");
+      setLoading(true); 
+      setErrorMessage(null);
 
-        const response =await axios.post('http://localhost:8000/new-workspace', {
+      if (status === 'authenticated' && session?.user) {
+        // If the user is authenticated, use the session information
+        const response = await axios.post('http://localhost:8000/new-workspace', {
           imageIndex: selectedImageIndex,
           workspaceName: workspaceName,
-        },{
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          user: session.user, 
         });
-
         console.log("Server response:", response.data);
-
 
         const workspaceId = response.data.workspace.workspaceId;
         console.log("my workspace",workspaceId);
 
         useStore.getState().setWorkspaceName(workspaceName);
-        
+
         router.replace(`/home/${workspaceId}`);
 
         setIsModalOpen(false);
-      } catch (error) {
-        console.error('Error creating workspace:', error);
-      
+      } else {
+        // If not authenticated, use the token
+        const token = document.cookie.replace(/(?:(?:^|.*;\s*)token\s*=\s*([^;]*).*$)|^.*$/, "$1");
+        const response = await axios.post('http://localhost:8000/new-workspace', {
+          imageIndex: selectedImageIndex,
+          workspaceName: workspaceName,
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log("Server response:", response.data);
+
+        const workspaceId = response.data.workspace.workspaceId;
+        console.log("my workspace",workspaceId);
+
+        useStore.getState().setWorkspaceName(workspaceName);
+
+        router.replace(`/home/${workspaceId}`);
+
+        setIsModalOpen(false);
       }
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+};
+
 
   return (
     <div className="flex items-center justify-center h-full">
       <div className="box-container flex flex-col max-w-2xl gap-2 p-6 rounded-md shadow-md bg-white dark:bg-gray-900 dark:text-gray-100">
+      {loading && <Loaders />}
         <h2 className="text-xl font-semibold leading-tight">Welcome to Generative</h2>
         <p className="flex dark:text-violet-400">
           Transform your collaborative efforts with our dynamic workspace, providing a seamless environment for real-time collaboration and efficient documentation.
@@ -152,7 +183,7 @@ export default function AlertBox() {
                     ref={inputRef}
                     type='text'
                     name='workspaceName'
-                    className="shadow-sm dark:text-gray-900 text-black block w-3/4 ml-5 h-10 sm:text-sm border border-gray-900 rounded-md px-2 transition-all duration-300 "
+                    className="shadow-sm dark:text-black text-black block w-3/4 ml-5 h-10 sm:text-sm border border-gray-900 rounded-md px-2 transition-all duration-300 "
                     placeholder="Workspace Name"
                   />
                 </div>
@@ -176,7 +207,17 @@ export default function AlertBox() {
             </div>
           </div>
         )}
+       {/* Loading Screen */}
+       {loading && (
+          <div className="fixed top-0 left-0 w-full h-full bg-gray-500 bg-opacity-75 flex items-center justify-center">
+            <div className="spinner-border text-violet-500" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+export default AlertBox;

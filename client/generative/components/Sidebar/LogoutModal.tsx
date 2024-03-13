@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 export default function LogoutModal({ onClose }) {
   const [open, setOpen] = useState(true)
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
+  const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
 
   const cancelButtonRef = useRef(null)
 
@@ -21,6 +22,7 @@ export default function LogoutModal({ onClose }) {
     setIsLogoutClicked(true);
     setOpen(false);
     router.push('/');
+    resetLogoutClicked();
   };
 
   const handleCancel = () => {
