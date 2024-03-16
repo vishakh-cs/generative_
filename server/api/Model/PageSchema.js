@@ -11,6 +11,10 @@ const PageSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  Trashed:{
+     type: Boolean,
+     default:false,
+  },
   content: {
     type: String,
 

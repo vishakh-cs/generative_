@@ -31,9 +31,22 @@ const sidebarUser = async (req, res) => {
         // Fetch workspace data
         const workspaces = await Workspace.find({ owner: user._id });
 
-        const pages = workspace.pages || [];
+        // const pages = workspace.pages || [];
 
-        res.status(200).json({ success: true, data: userDataForSidebar, workspaces ,pages });
+        const pages = await PageSchema.find({ _id: { $in: workspace.pages }, Trashed: false });
+
+        const pageNames = pages.map(page => page.PageName);
+
+        const pageData = await PageSchema.find({ PageName: { $in: pageNames } });
+
+        // Extract page IDs
+        const pageId = pageData.map(page => page._id);
+
+        console.log("pageIds",pageId);
+
+        console.log("pageNames", pageNames);
+
+        res.status(200).json({ success: true, data: userDataForSidebar, workspaces ,pages ,pageNames ,pageId });
     } catch (error) {
         console.error('Error fetching sidebar data:', error.message);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -42,10 +55,17 @@ const sidebarUser = async (req, res) => {
 
 const bannerImageUpload = async (req, res) => {
   try {
-    const { workspaceId, pageId, imageUrl } = req.body;
+    
+    const { workspaceId, imageUrl } = req.body;
+
+    const Page_id =req.body.pageId
+
+    console.log("req body",req.body);
+
+    console.log("ppageIdpageIdageId",Page_id);
 
     // Assuming you want to update the Page model
-    const page = await PageSchema.findById(pageId);
+    const page = await PageSchema.findById(Page_id);
 
     if (!page) {
       return res.status(404).json({ success: false, message: 'Page not found' });
@@ -341,6 +361,29 @@ const getWorkspaceType = async (req, res) => {
   }
 };
 
+const addToTrash = async (req, res) => {
+  console.log("hii");
+  try {
+    const { selectedPage } = req.body;
+    console.log("pagepage",selectedPage)
+
+    const page = await PageSchema.findById(selectedPage);
+    
+    if (!page) {
+      return res.status(404).json({ error: 'Page not found.' });
+    }
+
+    page.Trashed = true;
+    await page.save();
+
+    // Respond with success
+    res.status(200).json({ message: 'Page moved to trash successfully.' });
+  } catch (error) {
+    console.error('Error moving page to trash:', error);
+    res.status(500).json({ error: 'Failed to move page to trash.' });
+  }
+};
+
 
 module.exports = {
     sidebarUser,
@@ -353,5 +396,6 @@ module.exports = {
     updateWorkspaceType,
     getWorkspaceType,
     addCollabUser,
+    addToTrash,
 
 };

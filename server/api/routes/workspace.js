@@ -44,6 +44,8 @@ router.get('/get_workspace_data/:workspaceId', workspaceController.getWorkspaceT
 
 router.get('/add_collab/:userEmail/:workspaceId', workspaceController.addCollabUser);
 
+router.post('/add_to_trash',workspaceController.addToTrash);
+
 
 
 

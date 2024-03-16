@@ -18,6 +18,8 @@ import { MdOutlineSettingsSuggest } from "react-icons/md";
 import Settings from './Settings';
 import './sidebar.css'; 
 import { SettingsSlider } from './SettingsSlider/page';
+import { FaRegTrashAlt } from "react-icons/fa";
+import { CiTrash } from "react-icons/ci";
 
 interface SidebarContextProps {
   expanded: boolean;
@@ -37,6 +39,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [pages, setPages] = useState<string[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [Page_id, setPage_id] = useState<string[] | null>(null!);
+  const [PageData, setPageData] = useState<string[] | null>(null!);
   const [selectedPage, setSelectedPage] = useState<null | string>(null);
   const [isSettingsOpen, setSettingsOpen] = useState(false); 
   const [workspaceid,setWorkspaceId]=useState('');
@@ -46,6 +49,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const workspaceName = useStore((state) => state.workspaceName);
 
   const router = useRouter();
+
+  console.log("Page_idPage_id",Page_id);
+
+  console.log("PageData",PageData);
 
   const toggleSidebar = () => {
     setExpanded((curr) => !curr);
@@ -76,22 +83,23 @@ export default function Sidebar({ children, params }: SidebarProps) {
           workspaceId: params.workspaceid,
         });
 
-        const { data, workspaces, pages: pageIds } = response.data;
+        const { data, workspaces, pages: pageIds ,pageNames ,pageId } = response.data;
 
-        setPage_id(pageIds)
+        setPage_id(pageId)
+        setPages(pageNames)
         setWorkspaceId(params.workspaceid)
         setUserData(data);
         setWorkspaces(workspaces);
         const selectedWorkspace = workspaces.find(w => w.id === params.workspaceid);
 
-        // Fetch page details based on the received page IDs
-        const pageDetailsPromises = pageIds.map(async (pageId) => {
-          const pageResponse = await axios.get(`http://localhost:8000/get_page/${pageId}`);
-          return pageResponse.data.PageName;
-        });
-        // Wait for all promises to resolve and then set the pages state
-        const resolvedPages = await Promise.all(pageDetailsPromises);
-        setPages(resolvedPages);
+        // // Fetch page details based on the received page IDs
+        // const pageDetailsPromises = pageIds.map(async (pageId) => {
+        //   const pageResponse = await axios.get(`http://localhost:8000/get_page/${pageId}`);
+        //   return pageResponse.data.PageName;
+        // });
+        // // Wait for all promises to resolve and then set the pages state
+        // const resolvedPages = await Promise.all(pageDetailsPromises);
+        // // setPages(resolvedPages);
 
       } catch (error:any) {
         console.error('Error fetching user data:', error.message);
@@ -114,8 +122,9 @@ export default function Sidebar({ children, params }: SidebarProps) {
     setIsLogoutClicked(true);
   };
 
+  // page click
   const handleProfileClick = (pageId: string) => {
-    if (pageId) {
+    if (Page_id) {
       router.replace(`/home/${params.workspaceid}/${pageId}`);
       setSelectedPage(pageId);
     } else {
@@ -151,6 +160,19 @@ export default function Sidebar({ children, params }: SidebarProps) {
     }
   };
 
+  const moveToTrash = async (page: string) => {
+    try {
+      const response = await axios.post('http://localhost:8000/add_to_trash', {
+        selectedPage,
+      });
+      // Update pages state to remove the deleted page
+      // setPages(prevPages => prevPages.filter(page => page.pageId !== pageId));
+      toast.success('Page moved to trash successfully.');
+    } catch (error) {
+      console.error('Error moving page to trash:', error);
+      toast.error('Failed to move page to trash.');
+    }
+  };
 
   const expandedSidebarClass = 'w-32';
   const collapsedSidebarClass = 'w-0';
@@ -205,6 +227,16 @@ export default function Sidebar({ children, params }: SidebarProps) {
             >
               <span className={twMerge('text-gray-600 dark:text-gray-300')}>Create New Workspace +</span>
             </button>
+            
+            <button
+              // onClick={HandleTrashManagement}
+              className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
+            >
+              <span className={twMerge('text-gray-600 flex justify-between dark:text-gray-300')}>Trash Manangement </span>
+              <span><CiTrash size={22} className='ml-4'/></span>
+            </button>
+
+
             {workspaces.map((workspace, index) => (
               <button
                 key={workspace.id}
@@ -252,10 +284,13 @@ export default function Sidebar({ children, params }: SidebarProps) {
                   onClick={() => Page_id && handleProfileClick(Page_id[pageIndex])}
 
                 >
+                   <CiFileOn size={20} className="ml-3" />
                   <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
                     {page}
                   </span>
-                  <CiFileOn size={20} className="ml-auto" />
+                  <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(page)} />
+
+                 
                 </button>
               ))}
               <div className="h-20 sticky inset-x-0 bottom-0  bg-gradient-to-t from-sidebar to-transparent"></div>

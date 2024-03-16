@@ -9,6 +9,8 @@ import { IoIosArrowDropdown } from "react-icons/io";
 import { RiBriefcaseFill } from "react-icons/ri";
 import { Switch } from "@/components/ui/switch"
 import { useEdgeStore } from '@/lib/edgestore';
+import Image from 'next/image';
+
 
 
 
@@ -54,7 +56,6 @@ export default function ProfileSlider({ avatarData }) {
           emailId: avatarData?.email
         });
 
-        // Check if the image URL is successfully saved in the database
         if (saveResponse.data.success) {
           setSuccess(true);
           toast.success('Image uploaded successfully');
@@ -113,19 +114,22 @@ export default function ProfileSlider({ avatarData }) {
           <AvatarImage src={avatarImage} />
           <AvatarFallback
             className={twMerge(`
-              rounded-full
-              h-12
-              bg-gray-200 dark:bg-gray-600
-              text-gray-500 dark:text-gray-400
-              flex items-center justify-center relative
-            `)}
+            rounded-full
+            h-12
+            bg-gray-200 dark:bg-gray-600
+            text-gray-500 dark:text-gray-400
+            flex items-center justify-center relative
+          `)}
           >
             {loading && <RiLoader4Line className="absolute animate-spin text-white" />}
             {!loading && (
               <>
-                <img
+                <Image
                   src={avatarData?.profileImageUrl}
                   alt="profile image"
+                  width={48}
+                  height={48}
+                  className=" h-12 rounded-full"
                 />
                 {success && <RiCheckLine className="absolute bottom-0 right-0 text-green-500" />}
               </>
@@ -146,7 +150,7 @@ export default function ProfileSlider({ avatarData }) {
                     className={twMerge(`
                      rounded-full
                      h-32
-                     bg-gray-200 dark:bg-gray-600
+                    
                      text-gray-500 dark:text-gray-400
                      flex items-center justify-center relative
                     `)}
@@ -154,10 +158,23 @@ export default function ProfileSlider({ avatarData }) {
                     {loading && <RiLoader4Line className="absolute animate-spin text-white" />}
                     {loading ? (
                       <RiLoader4Line className="absolute animate-spin text-white" />
-                    ) : avatarData?.profileImageUrl ? ( 
-                      <img src={avatarData.profileImageUrl} alt="profile image" /> 
+                    ) : avatarData?.profileImageUrl ? (
+
+                      <Image
+                        src={avatarData?.profileImageUrl}
+                        alt="profile image"
+                        width={90}
+                        height={48}
+                        quality={100}
+                        unoptimized
+                        style={{
+                          height:'90px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                        }}
+                      />
                     ) : (
-                      <span>{avatarData?.username.slice(0, 2).toUpperCase()}</span> 
+                      <span>{avatarData?.username.slice(0, 2).toUpperCase()}</span>
                     )}
                     {success && <RiCheckLine className="absolute bottom-0 right-0 text-green-500" />}
                   </AvatarFallback>

@@ -74,7 +74,7 @@ const BannerImage: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
       setFile(selectedFile);
   
       // Delete the old image
-      if (workspace.page.PageBannerImage) {
+      if (workspace?.page?.PageBannerImage) { 
         await edgestore.publicFiles.delete(workspace.page.PageBannerImage);
       }
   
