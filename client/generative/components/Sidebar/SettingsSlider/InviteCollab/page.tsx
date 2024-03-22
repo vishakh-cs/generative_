@@ -12,24 +12,42 @@ interface User {
     status: string;
     role: string;
     email: string;
-  }
-  
-  interface InviteCollabProps {
+}
+
+interface InviteCollabProps {
     workspaceId: string;
-  }
-  
-  const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollabProps) => {
+}
+
+const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollabProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [message,setMessage]=useState<string |null>(null);
+    const [message, setMessage] = useState<string | null>(null);
+    const [collaboratingUsers, setCollaboratingUsers] = useState<User[]>([]);
 
-    const WorkspaceType = useStore((state)=>state.workspaceType);
+    const WorkspaceType = useStore((state) => state.workspaceType);
 
-    console.log("searchResults", searchResults);
-    
+    console.log("collaboratingUsers", collaboratingUsers);
+
+    useEffect(() => {
+        const fetchCollaboratingUsers = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8000/get_collaborating_users`, {
+                    params: {
+                        workspaceId: workspaceId,
+                    },
+                });
+
+                setCollaboratingUsers(response.data.collaborators);
+            } catch (error: any) {
+                console.error("Error fetching collaborating users:", error);
+            }
+        };
+
+        fetchCollaboratingUsers();
+    }, [workspaceId]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,7 +61,7 @@ interface User {
                 });
 
                 setSearchResults(response.data.users);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error fetching user data:", error);
                 setError(error.message);
             } finally {
@@ -58,25 +76,50 @@ interface User {
         }
     }, [searchQuery, workspaceId]);
 
+
+    const handleRemoveCollaborator = async (userId: string) => {
+        console.log("userId", userId);
+        try {
+            const response = await axios.post("http://localhost:8000/remove_collaborator", {
+                userId: userId,
+                workspaceId: workspaceId,
+            });
+
+            if (response.data.success) {
+                // Filter out the removed user from the state
+                setCollaboratingUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
+                toast.success("User removed from collaboration");
+            } else {
+                toast.error("Failed to remove user from collaboration");
+            }
+        } catch (error) {
+            console.error("Error removing user from collaboration:", error);
+            toast.error("Failed to remove user from collaboration");
+        }
+    };
+
+
     const isPrivateWorkspace = WorkspaceType === "private";
 
     return (
         <div>
-        {isPrivateWorkspace ? (
-          <p className="text-red-500 font-semibold opacity-80 text-lg font-sans flex "><h4>Change workspace type to 'shared' to add collaborators.</h4><IoLockClosed color="white" className="mt-2 " size={30} /></p>
-        ) : (
-          <button onClick={() => setIsOpen(!isPrivateWorkspace)}>
-            <span className="text-black dark:text-white">Add Collaborator</span>
-          </button>
-        )}
-        <SpringModal
-          isOpen={isOpen && !isPrivateWorkspace}
-          setIsOpen={setIsOpen}
-          workspaceId={workspaceId}
-          setSearchQuery={setSearchQuery}
-          searchResults={searchResults}
-        />
-      </div>
+            {isPrivateWorkspace ? (
+                <p className="text-red-500 font-semibold opacity-80 text-lg font-sans flex "><h4>Change workspace type to 'shared' to add collaborators.</h4><IoLockClosed color="white" className="mt-2 " size={30} /></p>
+            ) : (
+                <button onClick={() => setIsOpen(!isPrivateWorkspace)}>
+                    <span className="text-black dark:text-white font-sans font-semibold">Add Collaborator</span>
+                </button>
+            )}
+            <SpringModal
+                isOpen={isOpen && !isPrivateWorkspace}
+                setIsOpen={setIsOpen}
+                workspaceId={workspaceId}
+                setSearchQuery={setSearchQuery}
+                searchResults={searchResults}
+                collaboratingUsers={collaboratingUsers}
+                handleRemoveCollaborator={handleRemoveCollaborator}
+            />
+        </div>
     );
 };
 
@@ -86,32 +129,41 @@ const SpringModal = ({
     setSearchQuery,
     searchResults,
     workspaceId,
+    collaboratingUsers,
+    handleRemoveCollaborator,
 }: {
     isOpen: boolean;
     setIsOpen: Dispatch<SetStateAction<boolean>>;
     setSearchQuery: Dispatch<SetStateAction<string>>;
     searchResults: User[];
-    workspaceId:string;
+    workspaceId: string;
+    collaboratingUsers?: User[];
+    handleRemoveCollaborator: (userId: string) => Promise<void>;
 }) => {
 
     const handleInvite = async (user: User) => {
         try {
-            await axios.post("http://localhost:8000/send_email_notification", {
+            const invitePromise = axios.post("http://localhost:8000/send_email_notification", {
                 userEmail: user.email,
                 workspaceId: workspaceId,
             });
-            console.log(`Invitation email sent to ${user.email}`);
-            toast.success(`Invitation email sent to ${user.email}`)
+
+            toast.promise(invitePromise, {
+                loading: 'Sending invitation email...',
+                success: `Invitation email sent to ${user.email}`,
+                error: 'Failed to send invitation email.',
+            });
         } catch (error) {
             console.error("Error sending email notification:", error);
-           
         }
     };
+
 
     const handleCloseModal = () => {
         setSearchQuery("");
         setIsOpen(false);
     };
+
 
 
 
@@ -135,6 +187,33 @@ const SpringModal = ({
                         <FiAlertCircle className="text-white/10 rotate-12 text-[250px] absolute z-0 -top-24 -left-24" />
                         <div className="relative z-10">
                             <h3 className="text-3xl font-bold text-center mb-2">Invite a User</h3>
+                            {/* Show collaborating users */}
+                            <div className="block dark:text-white text-black text-lg font-semibold py-2 px-2">
+                                Collaborating Users
+                            </div>
+                            <div className="w-full h-20 bg-white border rounded-md overflow-auto">
+                                <div className="p-4 text-black">
+                                    {collaboratingUsers && collaboratingUsers.length > 0 ? (
+                                        <div>
+                                            {collaboratingUsers.map((user) => (
+                                                <div key={user.id} className="flex items-center justify-between font-semibold text-black m-1">
+                                                    {user.email}
+                                                    <button
+                                                        className="ml-20 font-semibold bg-orange-600 text-white rounded-lg w-24"
+                                                        onClick={() => handleRemoveCollaborator(user._id)}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div>No collaborating users</div>
+                                    )}
+                                </div>
+                            </div>
+
+
                             <p className="text-sm text-justify mb-6">
                                 Invite a User to your project to Work Together on it. You can also Assign them as Roles, you can do it later from
                                 the Project Settings /Collab User section.
@@ -166,7 +245,7 @@ const SpringModal = ({
                                                         type="text"
                                                         placeholder="Search teams or members"
                                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                                        autoComplete="off" 
+                                                        autoComplete="off"
                                                     />
                                                 </div>
 
@@ -198,7 +277,7 @@ const SpringModal = ({
                             </div>
                             <div className="flex gap-2">
                                 <button
-                                   onClick={handleCloseModal}
+                                    onClick={handleCloseModal}
                                     className="bg-transparent hover:bg-white/10 transition-colors text-white font-semibold w-full py-2 rounded"
                                 >
                                     Nah, go back

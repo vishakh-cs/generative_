@@ -38,6 +38,11 @@ export default function Signup() {
     const handleForm = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
 
+        if (!e.currentTarget.username.value.trim()) {
+            setMessage("Please enter your full name.");
+            return;
+        }
+
         if (e.currentTarget.password.value !== e.currentTarget.confirmPassword.value) {
             setMessage("Password does not match the confirm password");
             return;
@@ -124,27 +129,27 @@ export default function Signup() {
                         <form onSubmit={handleForm} className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
                             <div className="col-span-2">
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Full Name</label>
-                                <input type="text" name='username' placeholder="your Full name" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
+                                <input type="text" name='username' placeholder="your Full name" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"  />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Phone number</label>
-                                <input type="text" name='phonenumber' placeholder="XXX-XX-XXXX-XXX" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
+                                <input type="text" name='phonenumber' placeholder="XXX-XX-XXXX-XXX" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Email address</label>
-                                <input type="email" name='email' placeholder="myemail@example.com" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
+                                <input type="email" name='email' placeholder="myemail@example.com" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"  />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Password</label>
-                                <input type="password" name='password' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
+                                <input type="password" name='password' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"  />
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">Confirm password</label>
-                                <input type="password" name='confirmPassword' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" required />
+                                <input type="password" name='confirmPassword' placeholder="Enter your password" className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"  />
                             </div>
 
                             <button
@@ -157,7 +162,7 @@ export default function Signup() {
                                         clip-rule="evenodd" />
                                 </svg>
                             </button>
-                            <a onClick={() => router.push('/login')} className='text-white mt-2 py-2 px-4' >Login</a>
+                            <a onClick={() => router.push('/login')} className='text-white mt-2 py-2 px-4 font-semibold cursor-pointer ml-2' >Login</a>
                         </form>
                     </div>
                 </div>

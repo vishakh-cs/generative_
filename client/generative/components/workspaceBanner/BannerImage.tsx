@@ -64,53 +64,57 @@ const BannerImage: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
   };
 
 
-  const handleUpload = async () => {
-    try {
-      if (!selectedFile) {
-        toast.error('No file provided!');
-        return;
-      }
-      setUploading(true);
-      setFile(selectedFile);
-  
-      // Delete the old image
-      if (workspace?.page?.PageBannerImage) { 
-        await edgestore.publicFiles.delete(workspace.page.PageBannerImage);
-      }
-  
-      // Upload the new image to Edge Store
-      const res = await edgestore.publicFiles.upload({
-        file: selectedFile,
-        options: {
-          
-        },
-        onProgressChange: (progress) => {
-          console.log(progress);
-        },
-      });
-  
-      // Fetch updated workspace data with the new image URL
-      const updatedWorkspace = await axios.post('http://localhost:8000/BannerImageURL', {
-        workspaceId,
-        pageId,
-        imageUrl: res.url,
-      });
-  
-      setWorkspace(updatedWorkspace.data);
-      
-      setForceUpdate((prev) => !prev);
-  
-      console.log('Image uploaded to Edge Store:', res.url);
-      
-      setSelectedFile(null);
-      toast.success('Image uploaded successfully!');
-    } catch (error :any) {
-      console.error('Error uploading image:', error.message);
-      toast.error('Error uploading image');
-    } finally {
-      setUploading(false);
+  const handleUpload = () => {
+    if (!selectedFile) {
+       toast.error('No file provided!');
+       return;
     }
-  };
+    const uploadPromise = new Promise(async (resolve, reject) => {
+       try {
+         setUploading(true);
+         setFile(selectedFile);
+   
+         // Delete the old image
+         if (workspace?.page?.PageBannerImage) {
+           await edgestore.publicFiles.delete(workspace.page.PageBannerImage);
+         }
+   
+         // Upload the new image to Edge Store
+         const res = await edgestore.publicFiles.upload({
+           file: selectedFile,
+           options: {},
+           onProgressChange: (progress) => {
+             console.log(progress);
+           },
+         });
+   
+         // Fetch updated workspace data with the new image URL
+         const updatedWorkspace = await axios.post('http://localhost:8000/BannerImageURL', {
+           workspaceId,
+           pageId,
+           imageUrl: res.url,
+         });
+   
+         setWorkspace(updatedWorkspace.data);
+         setForceUpdate((prev) => !prev);
+         console.log('Image uploaded to Edge Store:', res.url);
+         setSelectedFile(null);
+         resolve('Image uploaded successfully!');
+       } catch (error :any) {
+         console.error('Error uploading image:', error.message);
+         reject('Error uploading image');
+       } finally {
+         setUploading(false);
+       }
+    });
+   
+    // Use toast.promise to handle the loading, success, and error states
+    toast.promise(uploadPromise, {
+       loading: 'Uploading image...',
+       success: 'Image uploaded successfully!',
+       error: 'Error uploading image.',
+    });
+   };
   const memoizedImage = useMemo(() => {
     return (
       <>

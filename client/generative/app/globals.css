@@ -3,9 +3,9 @@
 @tailwind utilities;
  
 
-body {
+/* body {
   overflow: hidden;
-}
+} */
 
 
 @layer base {

@@ -130,16 +130,7 @@ export default function UserManagement() {
                 <p className="text-gray-600">No user found</p>
               )} */}
             </div>
-            <div className='flex justify-center items-center h-1/3 py-5'>
-              {isLoading ? (
-                <Loaders />
-              ) : (
-                <button className='bg-blue-400 rounded-lg h-14 w-1/5 font-bold' onClick={handleButtonClick}>
-                  <BiRefresh className="inline-block mr-2" size={30} />
-                  Click here to load the data
-                </button>
-              )}
-            </div>
+
 
             {/* Table Section */}
             {/* Table Section */}
@@ -167,7 +158,7 @@ export default function UserManagement() {
                   <tbody className="bg-white divide-y divide-gray-200 dark:text-black">
                     {/* Render the searched user */}
                     <tr key={searchedUser._id}>
-                      <td className="px-6 py-4 whitespace-nowrap">{searchedUser._id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{"false"}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{searchedUser.username}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{searchedUser.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">

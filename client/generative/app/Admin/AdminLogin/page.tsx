@@ -3,34 +3,38 @@ import axios from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React from 'react';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 const AdminLogin = () => {
 
     const router = useRouter();
 
-    const handleAdminLogin= async(e)=>{
-        e.preventDefault();
-        let email = e.target.Email.value;
-        let password = e.target.password.value;
-
-          try {
-            const response = await axios.post(`http://localhost:8000/admin-login`, { email, password });
-      
-            if (response.data.success) {
-              // Set the cookie here
-              document.cookie = `token=${response.data.token}; path=/`;
-              
-              toast.success("Logged in Successfully!");
-              router.push('/Admin/adminDashboard');
-            } else {
-              toast.error(response.data.msg || 'Invalid Credentials!');
-            }
-          } catch (error) {
-            console.error(error);
-            toast.error('An error occurred. Please try again later.');
-          }
-        };
+    const handleAdminLogin = async (e) => {
+      e.preventDefault();
+      let email = e.target.Email.value;
+      let password = e.target.password.value;
+     
+      try {
+         const response = await axios.post(`http://localhost:8000/admin-login`, { email, password });
+     
+         if (response.data.success) {
+           document.cookie = `token=${response.data.token}; path=/`;
+           toast.success("Logged in Successfully!");
+           router.push('/Admin/adminDashboard');
+         } else {
+           toast.error(response.data.msg || 'Invalid Credentials!');
+         }
+      } catch (error) {
+         console.error(error);
+         if (error.response && error.response.status === 404) {
+           toast.error('The requested resource was not found. Please check the URL and try again.');
+         } else {
+           toast.error('An error occurred. Please try again later.');
+         }
+      }
+     };
+     
+     
   return (
     <div className="bg-black text-white flex min-h-screen flex-col items-center pt-16 sm:justify-center sm:pt-0">
      
@@ -85,6 +89,7 @@ const AdminLogin = () => {
               </div>
             </form>
           </div>
+          <Toaster />
         </div>
       </div>
     </div>

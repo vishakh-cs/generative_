@@ -17,6 +17,8 @@ interface StoreState {
     pages: string[];
     type: string;
   } | null;
+  isPageRestored: boolean; 
+  isWorkspaceNameChanged: boolean; 
 }
 
 interface StoreActions {
@@ -28,6 +30,8 @@ interface StoreActions {
   setWorkspaceId: (id: string) => void;
   setWorkspaceType: (type: string) => void;
   setCollaboratorWorkspace: (collabWorkspace: StoreState['collaboratorWorkspace']) => void;
+  setPageRestored(restored: boolean): void;
+  setWorkspaceNameChange(changed: boolean): void;
 
 }
 
@@ -39,6 +43,8 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   workspaceId: '',
   workspaceType:'',
   collaboratorWorkspace: null,
+  isPageRestored: false,
+  isWorkspaceNameChanged: false,
 
   setUserEmail: (email) => set({ userEmail:  email.toLowerCase() }),
 
@@ -51,6 +57,9 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   setWorkspaceId: (id) => set({ workspaceId: id }),
   setWorkspaceType: (type) => set({ workspaceType: type }),
   setCollaboratorWorkspace: (collabWorkspace) => set({ collaboratorWorkspace: collabWorkspace }),
+  setPageRestored: (restored) => set({ isPageRestored: restored }),
+
+  setWorkspaceNameChange: (changed) => set({isWorkspaceNameChanged: changed}),
 }));
 
 export default useStore;

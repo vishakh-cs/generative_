@@ -16,10 +16,13 @@ import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineSettingsSuggest } from "react-icons/md";
 import Settings from './Settings';
-import './sidebar.css'; 
+import './sidebar.css';
 import { SettingsSlider } from './SettingsSlider/page';
 import { FaRegTrashAlt } from "react-icons/fa";
 import { CiTrash } from "react-icons/ci";
+import dynamic from 'next/dynamic';
+
+const DynamicTrashBar = dynamic(() => import('./TrashBar/page'), { ssr: false });
 
 interface SidebarContextProps {
   expanded: boolean;
@@ -36,23 +39,29 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [collabWorkspaces, setCollabWorkspaces] = useState<any[]>([]);
   const [pages, setPages] = useState<string[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [Page_id, setPage_id] = useState<string[] | null>(null!);
   const [PageData, setPageData] = useState<string[] | null>(null!);
   const [selectedPage, setSelectedPage] = useState<null | string>(null);
-  const [isSettingsOpen, setSettingsOpen] = useState(false); 
-  const [workspaceid,setWorkspaceId]=useState('');
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [workspaceid, setWorkspaceId] = useState('');
+  const [loading, setLoading] = useState(false);
 
 
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
   const workspaceName = useStore((state) => state.workspaceName);
+  const isPageRestored = useStore((state) => state.isPageRestored);
+  const isWorkspaceNameChanged = useStore((state) => state.isWorkspaceNameChanged)
+
+  const [isProfileChange, setIsProfileChange] = useState(false);
+
+  console.log("collabWorkspaces,collaboratorWorkspaceLogo", collabWorkspaces);
+
+  console.log("isProfileChange", isProfileChange);
 
   const router = useRouter();
-
-  console.log("Page_idPage_id",Page_id);
-
-  console.log("PageData",PageData);
 
   const toggleSidebar = () => {
     setExpanded((curr) => !curr);
@@ -71,49 +80,46 @@ export default function Sidebar({ children, params }: SidebarProps) {
   };
 
 
-  useEffect(() => {
-    // fetch user and workspace data
-    const fetchData = async () => {
-      try {
-        if (!params.workspaceid) {
-          return;
-        }
 
-        const response = await axios.post('http://localhost:8000/sidebar_data', {
-          workspaceId: params.workspaceid,
-        });
-
-        const { data, workspaces, pages: pageIds ,pageNames ,pageId } = response.data;
-
-        setPage_id(pageId)
-        setPages(pageNames)
-        setWorkspaceId(params.workspaceid)
-        setUserData(data);
-        setWorkspaces(workspaces);
-        const selectedWorkspace = workspaces.find(w => w.id === params.workspaceid);
-
-        // // Fetch page details based on the received page IDs
-        // const pageDetailsPromises = pageIds.map(async (pageId) => {
-        //   const pageResponse = await axios.get(`http://localhost:8000/get_page/${pageId}`);
-        //   return pageResponse.data.PageName;
-        // });
-        // // Wait for all promises to resolve and then set the pages state
-        // const resolvedPages = await Promise.all(pageDetailsPromises);
-        // // setPages(resolvedPages);
-
-      } catch (error:any) {
-        console.error('Error fetching user data:', error.message);
+  // fetch user and workspace data
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      if (!params.workspaceid) {
+        return;
       }
-    };
 
+      const response = await axios.post('http://localhost:8000/sidebar_data', {
+        workspaceId: params.workspaceid,
+      });
+
+      const { data, workspaces, pages: pageIds, pageNames, pageId, collaboratorWorkspace: collabWs } = response.data;
+
+      setPage_id(pageId)
+      setPages(pageNames)
+      setWorkspaceId(params.workspaceid)
+      setUserData(data);
+      setWorkspaces(workspaces);
+      setCollabWorkspaces(collabWs);
+      const selectedWorkspace = workspaces.find(w => w.id === params.workspaceid);
+
+    } catch (error: any) {
+      console.error('Error fetching user data:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
     fetchData();
-  }, [params.workspaceId]);
+  }, [params.workspaceId, isPageRestored, isWorkspaceNameChanged, isProfileChange]);
 
 
   const createNewWorkspace = async () => {
     try {
       console.log('Creating a new workspace...');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating new workspace:', error.message);
     }
   };
@@ -152,6 +158,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
       setPage_id((prevPageIds) => [...(prevPageIds || []), pageId]);
 
       toast.success(`Page "${newPage}" created successfully!`);
+      fetchData();
 
       closeModal();
     } catch (error) {
@@ -165,9 +172,30 @@ export default function Sidebar({ children, params }: SidebarProps) {
       const response = await axios.post('http://localhost:8000/add_to_trash', {
         selectedPage,
       });
-      // Update pages state to remove the deleted page
-      // setPages(prevPages => prevPages.filter(page => page.pageId !== pageId));
+      setPages(prevPages => prevPages.filter(p => p !== page));
+
+      setPage_id(prevPageIds => prevPageIds.filter(id => id !== selectedPage));
       toast.success('Page moved to trash successfully.');
+      // Check if there are no more pages
+      if (pages.length === 0) {
+
+        router.replace(`/home/${params.workspaceid}`);
+        setSelectedPage(null);
+      } else {
+        // Switch to the next or previous page
+        const currentIndex = pages.findIndex(p => p === page);
+        if (currentIndex !== -1) {
+          const nextIndex = currentIndex + 1;
+          const prevIndex = currentIndex - 1;
+          if (nextIndex < pages.length) {
+            router.replace(`/home/${params.workspaceid}/${Page_id[nextIndex]}`);
+            setSelectedPage(Page_id[nextIndex]);
+          } else if (prevIndex >= 0) {
+            router.replace(`/home/${params.workspaceid}/${Page_id[prevIndex]}`);
+            setSelectedPage(Page_id[prevIndex]);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error moving page to trash:', error);
       toast.error('Failed to move page to trash.');
@@ -227,16 +255,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
             >
               <span className={twMerge('text-gray-600 dark:text-gray-300')}>Create New Workspace +</span>
             </button>
-            
-            <button
-              // onClick={HandleTrashManagement}
-              className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
-            >
-              <span className={twMerge('text-gray-600 flex justify-between dark:text-gray-300')}>Trash Manangement </span>
-              <span><CiTrash size={22} className='ml-4'/></span>
-            </button>
 
+            <DynamicTrashBar workspaceId={workspaceid} />
 
+            {/* Render regular workspaces */}
             {workspaces.map((workspace, index) => (
               <button
                 key={workspace.id}
@@ -257,43 +279,93 @@ export default function Sidebar({ children, params }: SidebarProps) {
                     {workspace.name}
                   </span>
                   <span className='flex justify-between'>
-                    <SettingsSlider workspaceId={workspaceid} workspaceName={workspace.name} 
-                    workspaceLogoIndex={workspace.workspaceLogoIndex} 
-                    workspaceType={workspace.type}/>
-                 
-                  <IoMdAdd
-                    onClick={addNewPage}
-                    size={16}
-                    className='ml-4 mt-1' />
-                    </span>
-                </span>
+                    <SettingsSlider workspaceId={workspaceid} workspaceName={workspace.name}
+                      workspaceLogoIndex={workspace.workspaceLogoIndex}
+                      workspaceType={workspace.type} />
 
-              </button>
-
-            ))}
-             <div className="sidebar-content overflow-y-auto max-h-96">
-  
-              {pages && pages.map((page, pageIndex) => (
-                <button
-                  key={pageIndex}
-                  className={twMerge(`
-                    ${buttonBaseClass}
-                    ${transitionClass}
-                    ${Page_id !== null && selectedPage === Page_id[pageIndex] ? selectedPageClass : ''}
-                  `)}
-                  onClick={() => Page_id && handleProfileClick(Page_id[pageIndex])}
-
-                >
-                   <CiFileOn size={20} className="ml-3" />
-                  <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
-                    {page}
+                    <IoMdAdd
+                      onClick={addNewPage}
+                      size={16}
+                      className='ml-4 mt-1' />
                   </span>
-                  <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(page)} />
+                </span>
+              </button>
+            ))}
 
-                 
-                </button>
-              ))}
-              <div className="h-20 sticky inset-x-0 bottom-0  bg-gradient-to-t from-sidebar to-transparent"></div>
+            <div className="sidebar-content overflow-y-auto max-h-96">
+              {loading ? (
+                <div className="flex justify-center items-center h-20">
+                  <div className="spinner-border text-indigo-500"></div>
+                </div>
+              ) : (
+                <>
+                  {/* Render workspace pages */}
+                  {pages && pages.map((page, pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      className={twMerge(`
+                      ${buttonBaseClass}
+                      ${transitionClass}
+                      ${Page_id !== null && selectedPage === Page_id[pageIndex] ? selectedPageClass : ''}
+                    `)}
+                      onClick={() => Page_id && handleProfileClick(Page_id[pageIndex])}
+                    >
+                      <CiFileOn size={20} className="ml-3" />
+                      <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
+                        {page}
+                      </span>
+                      <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(page)} />
+                    </button>
+                  ))}
+
+                  {/* Render collaborative workspace if available */}
+                  {collabWorkspaces?.pages?.length > 0 && ( 
+                    <div className="collaborator-pages">
+                      {/* Collab workspace header */}
+                      <h3 className="flex justify-center text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text mt-4 ml-4">Collaborator Workspace</h3>
+                      {/* Collab workspace details */}
+                      <div className="ml-4 px-1 mb-2 flex items-center">
+                        {collabWorkspaces.collablogo && (
+                          <Image
+                            src={imgPaths[collabWorkspaces.collablogo]}
+                            alt="Collaborator Workspace Logo"
+                            width={20}
+                            height={20}
+                            className="mr-2"
+                          />
+                        )}
+                        <span>{collabWorkspaces.name}</span>
+                      </div>
+                      {/* Collab workspace pages */}
+                      {collabWorkspaces.pages.map((collabPage, index) => (
+                        <button
+                          key={collabPage._id}
+                          className={twMerge(`
+                          ${buttonBaseClass}
+                          ${transitionClass}
+                          ${selectedPage === collabPage._id ? selectedPageClass : ''}
+                        `)}
+                          onClick={() => handleProfileClick(collabPage._id)}
+                        >
+                          <CiFileOn size={20} className="ml-3" />
+                          <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
+                            {collabPage.PageName}
+                          </span>
+                          {/* Include trash functionality for pages */}
+                          <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(collabPage.PageName)} />
+                        </button>
+                      ))}
+
+                      {/* Leave collaboration button */}
+                      <button className="flex text-transparent text-center justify-center bg-clip-text bg-gradient-to-br from-blue-500 to-purple-500 font-semibold text-lg mt-6 p-8 ml-6 border-none focus:outline-none">
+                        <span>Leave Collaboration</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="h-20 sticky inset-x-0 bottom-0  bg-gradient-to-t from-sidebar to-transparent"></div>
+                </>
+              )}
             </div>
 
             {isModalOpen && (
@@ -305,19 +377,19 @@ export default function Sidebar({ children, params }: SidebarProps) {
           </>
         )}
 
-
         <SidebarContext.Provider value={{ expanded }}>
           <ul className={twMerge('flex-1 px-3 dark:text-white')}>{children}</ul>
         </SidebarContext.Provider>
 
         <div className={twMerge('border-t flex p-3')}>
-          <ProfileSlider avatarData={userData} />
+          <ProfileSlider avatarData={userData} setIsProfileChange={setIsProfileChange}
+            isProfileChange={isProfileChange} />
 
           <div
             className={twMerge(`
-              flex justify-between items-center
-              overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}
-          `)}
+               flex justify-between items-center
+               overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}
+           `)}
           >
             <div className={twMerge('leading-4')}>
               <h4 className={twMerge('font-semibold')}>{userData?.username}</h4>

@@ -8,6 +8,11 @@ import ProfileSlider from '@/components/Sidebar/ProfileSlider/page';
 import { RoomProvider } from '@/liveblocks.config';
 import CollaborativeEditor from '@/components/CollaborativeEditor/Editor';
 import { ClientSideSuspense } from '@liveblocks/react';
+import LandingWorkspace from '@/components/LandingWorkspace/page';
+import { CollabAlertBox } from '@/components/CollabAlertBox/page';
+
+
+
 
 
 export default function workspaceid({ params }) {
@@ -24,13 +29,12 @@ export default function workspaceid({ params }) {
           <LogoutModal onClose={() => resetLogoutClicked()} />
         ) : (
           <>
-            <div className='opacity-60'>workspaceid{params.workspaceid}</div>
-            <BannerImage workspaceId={params.workspaceid} pageId={params.pageid} />
-            <RoomProvider id="my-room" initialPresence={{}}>
-              <ClientSideSuspense fallback="Loading…">
-                {() => <CollaborativeEditor />}
-              </ClientSideSuspense>
-            </RoomProvider>
+            <div className='opacity-60'>workspaceid{params.workspaceid}
+             <LandingWorkspace />
+             {/* <CollabAlertBox /> */}
+            </div>
+           
+
           </>
         )}
       </div>

@@ -46,7 +46,21 @@ router.get('/add_collab/:userEmail/:workspaceId', workspaceController.addCollabU
 
 router.post('/add_to_trash',workspaceController.addToTrash);
 
+router.get('/trashedData/:workspaceId',workspaceController.fetchTrashData);
 
+router.post('/RestorePage/:pageId',workspaceController.restoreFromTrash);
+
+router.delete('/deletePage/:pageId',workspaceController.deletePage);
+
+router.post('/updateWorkspaceName',workspaceController.updateWorkspaceName);
+
+router.get('/get_collaborating_users',workspaceController.getCollabUser)
+
+router.post('/remove_collaborator',workspaceController.removeCollaborator);
+
+router.post('/changeUsername',workspaceController.changeUsername);
+
+router.get('/profileImages/:userId',workspaceController.getProfileImage);
 
 
 

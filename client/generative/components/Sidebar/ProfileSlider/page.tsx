@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { twMerge } from 'tailwind-merge';
@@ -10,22 +10,57 @@ import { RiBriefcaseFill } from "react-icons/ri";
 import { Switch } from "@/components/ui/switch"
 import { useEdgeStore } from '@/lib/edgestore';
 import Image from 'next/image';
+import useStore from '@/Stores/store';
+import { useSession } from 'next-auth/react';
 
+interface ProfileData {
+  userId: string;
+  profileImage?: string;
+  username?: string;
+  email?: string;
+}
+interface ProfileSliderProps {
+  avatarData: ProfileData;
+  setIsProfileChange: React.Dispatch<React.SetStateAction<boolean>>;
+  isProfileChange: boolean;
+}
 
-
-
-export default function ProfileSlider({ avatarData }) {
+export default function ProfileSlider({ avatarData, setIsProfileChange, isProfileChange }: ProfileSliderProps) {
   const [avatarImage, setAvatarImage] = useState(avatarData?.profileImage);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState(avatarData?.username);
-  const audioRef = useRef(null);
+  const { status, data: session } = useSession();
+  const [avatarDataState, setAvatarDataState] = useState(avatarData);
+
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { edgestore } = useEdgeStore();
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
+  useEffect(() => {
+
+    fetchProfileImage();
+  }, []);
+
+  const fetchProfileImage = async () => {
+    setLoading(true);
+
+    try {
+      const response = await axios.get<{ profileImageUrl: string }>(`http://localhost:8000/profileImage/${avatarData.userId}`);
+      const { profileImageUrl } = response.data;
+
+      setAvatarImage(profileImageUrl);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile image:', error);
+      setLoading(false);
+    }
+  };
+
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       setLoading(true);
 
@@ -34,7 +69,7 @@ export default function ProfileSlider({ avatarData }) {
         const uploadResponse = await edgestore.publicFiles.upload({
           file: file,
           options: {
-            // Add any additional options here
+
           },
           onProgressChange: (progress) => {
             console.log(progress);
@@ -58,6 +93,7 @@ export default function ProfileSlider({ avatarData }) {
 
         if (saveResponse.data.success) {
           setSuccess(true);
+          setIsProfileChange(true)
           toast.success('Image uploaded successfully');
         } else {
           toast.error('Failed to save image URL in the database');
@@ -72,23 +108,6 @@ export default function ProfileSlider({ avatarData }) {
   };
 
 
-  const uploadImage = async (file) => {
-    setTimeout(async () => {
-      console.log('Uploading file:', file);
-      setLoading(false);
-      setSuccess(true);
-      toast.success('Image uploaded successfully');
-
-      if (audioRef.current) {
-        audioRef.current.play();
-      }
-
-      setTimeout(() => {
-        setSuccess(false);
-      }, 2000);
-    }, 2000);
-  };
-
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
   };
@@ -102,16 +121,39 @@ export default function ProfileSlider({ avatarData }) {
     setIsEditingUsername(true);
   };
 
-  const handleSaveUsername = () => {
-    console.log('Saving new username:', newUsername);
-    setIsEditingUsername(false);
-  };
-
+  const handleChangeUsername = async () => {
+    try {
+       setLoading(true);
+       const response = await axios.post('http://localhost:8000/changeUsername', {
+         newUsername: newUsername,
+         emailId: avatarData.email
+       });
+   
+       if (response.data.success) {
+         setSuccess(true);
+         setIsProfileChange(true);
+         setIsEditingUsername(false);
+         setAvatarDataState(prevData => ({ ...prevData, username: newUsername }));
+         toast.success('Username changed successfully');
+         setTimeout(() => {
+          setIsProfileChange(false);
+        }, 2000);
+       } else {
+         toast.error('Failed to change username');
+       }
+    } catch (error) {
+       console.error('Error changing username:', error);
+       toast.error('Failed to change username. Please try again.');
+    } finally {
+       setLoading(false);
+    }
+   };
+  
   return (
     <Sheet>
       <SheetTrigger className='w-12'>
         <Avatar>
-          <AvatarImage src={avatarImage} />
+          {/* <AvatarImage src={avatarImage } className="rounded-full"/> */}
           <AvatarFallback
             className={twMerge(`
             rounded-full
@@ -125,7 +167,7 @@ export default function ProfileSlider({ avatarData }) {
             {!loading && (
               <>
                 <Image
-                  src={avatarData?.profileImageUrl}
+                  src={avatarData?.profileImageUrl ||session?.user?.image}
                   alt="profile image"
                   width={48}
                   height={48}
@@ -133,6 +175,7 @@ export default function ProfileSlider({ avatarData }) {
                 />
                 {success && <RiCheckLine className="absolute bottom-0 right-0 text-green-500" />}
               </>
+              
             )}
           </AvatarFallback>
         </Avatar>
@@ -145,7 +188,7 @@ export default function ProfileSlider({ avatarData }) {
             <div className={twMerge('box-item')}>
               <div className={twMerge('flex justify-center')}>
                 <Avatar className='w-32'>
-                  <AvatarImage src={avatarImage} />
+                  {/* <AvatarImage src={avatarImage } /> */}
                   <AvatarFallback
                     className={twMerge(`
                      rounded-full
@@ -161,14 +204,15 @@ export default function ProfileSlider({ avatarData }) {
                     ) : avatarData?.profileImageUrl ? (
 
                       <Image
-                        src={avatarData?.profileImageUrl}
+                      className='rounded-full'
+                        src={avatarData?.profileImageUrl ||session?.user?.image}
                         alt="profile image"
                         width={90}
                         height={48}
                         quality={100}
                         unoptimized
                         style={{
-                          height:'90px',
+                          height: '90px',
                           borderRadius: '50%',
                           overflow: 'hidden',
                         }}
@@ -188,6 +232,7 @@ export default function ProfileSlider({ avatarData }) {
                   onChange={handleImageUpload}
                   className="hidden"
                   id="avatarUpload"
+                  aria-label="Upload Profile Image"
                 />
                 {loading ? (
                   <RiLoader4Line className="animate-spin text-white mr-2" />
@@ -203,18 +248,26 @@ export default function ProfileSlider({ avatarData }) {
 
             <div className={twMerge('box-item')}>
               <div className={twMerge('flex items-center mt-4 border-gray-200 rounded-lg h-16 w-full border')}>
-                <span className={twMerge('text-gray-500 dark:text-gray-400 mr-2 ml-3')}>
-                  {avatarData?.username}
+                <span className={twMerge('text-gray-500 dark:text-gray-400 overflow-hidden whitespace-nowrap')}>
+                {avatarDataState?.username.length > 15 ? (
+                    <span title={avatarDataState?.username}>
+                      {avatarDataState?.username?.slice(0, 15)}...
+                    </span>
+                 ) : (
+                  avatarData?.username
+                 )}
                 </span>
+
                 {isEditingUsername ? (
                   <>
                     <input
                       type="text"
                       value={newUsername}
                       onChange={(e) => setNewUsername(e.target.value)}
+                      aria-label="New Username"
                       className={twMerge('border-b border-gray-500 dark:border-gray-400 bg-transparent text-white px-1')}
                     />
-                    <button onClick={handleSaveUsername} className={twMerge('text-blue-500 hover:underline')}>
+                    <button onClick={handleChangeUsername} className={twMerge('text-blue-500 hover:underline')}>
                       Save
                     </button>
                   </>

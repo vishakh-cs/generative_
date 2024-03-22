@@ -6,7 +6,7 @@ import ProtectedRoutes from '@/components/ProtectedRoutes/page';
 import BannerImage from '@/components/workspaceBanner/BannerImage';
 import ProfileSlider from '@/components/Sidebar/ProfileSlider/page';
 import { RoomProvider } from '@/liveblocks.config';
-import CollaborativeEditor from '@/components/CollaborativeEditor/Editor';
+import CollaborativeEditor, { Editor } from '@/components/CollaborativeEditor/Editor';
 import { ClientSideSuspense } from '@liveblocks/react';
 
 
@@ -26,11 +26,11 @@ export default function workspaceid({ params }) {
           <>
             <div className='opacity-60 sticky top-0 z-10 '>workspaceid{params.workspaceid}/{params.pageid}</div>
             <BannerImage workspaceId={params.workspaceid} pageId={params.pageid} />
-            <RoomProvider id="my-room" initialPresence={{}}>
-              <ClientSideSuspense fallback="Loading…">
-                {() => <CollaborativeEditor workspaceId={params.workspaceid} pageId={params.pageid} />}
-              </ClientSideSuspense>
-            </RoomProvider>
+          
+            
+               <Editor workspaceId={params.workspaceid} pageId={params.pageid} />
+              
+          
           </>
         )}
       </div>

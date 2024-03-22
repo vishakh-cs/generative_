@@ -1,3 +1,4 @@
+"use state"
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import {
@@ -13,8 +14,11 @@ import {
 import { MdOutlineSettingsSuggest } from "react-icons/md";
 import { BsPencilSquare } from "react-icons/bs";
 import WorkpaceTypeDropDown from "./WorkspaceType/page";
-import InviteCollab from "./InviteCollab/page";
+
 import useStore from "@/Stores/store";
+import axios from "axios";
+import { useState } from "react";
+import InviteCollab from "./InviteCollab/page";
 
 interface SettingsSliderProps {
   workspaceId: string;
@@ -23,9 +27,12 @@ interface SettingsSliderProps {
   workspaceType: string;
 }
 
-export function SettingsSlider({ workspaceId,workspaceName, workspaceLogoIndex,workspaceType }: SettingsSliderProps) {
+export function SettingsSlider({ workspaceId, workspaceName, workspaceLogoIndex, workspaceType }: SettingsSliderProps) {
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [originalWorkspaceName, setOriginalWorkspaceName] = useState(workspaceName);
+  const setWorkspaceNameChange =useStore((state)=>state.setWorkspaceNameChange)
 
-  console.log("workspaceIdworkspaceId",workspaceId);
   const imgPaths = [
     "/Assets/workspace1.jpg",
     "/Assets/workspace2.jpg",
@@ -44,6 +51,33 @@ export function SettingsSlider({ workspaceId,workspaceName, workspaceLogoIndex,w
     "/Assets/workspace14.png",
   ];
 
+  const handleEditName = () => {
+    setIsEditingName(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+    setNewWorkspaceName("");
+  };
+
+  const handleUpdateWorkspaceName = async () => {
+    try {
+      await axios.post("http://localhost:8000/updateWorkspaceName", {
+        workspaceId: workspaceId,
+        newName: newWorkspaceName,
+      });
+      setIsEditingName(false);
+      setOriginalWorkspaceName(newWorkspaceName);
+      setWorkspaceNameChange(true);
+      setTimeout(() => {
+        setWorkspaceNameChange(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error sending new workspace name:", error);
+    }
+  };
+
+  
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -64,33 +98,40 @@ export function SettingsSlider({ workspaceId,workspaceName, workspaceLogoIndex,w
                 className="mr-2"
               />
             )}
-            <span className="text-xl">{workspaceName}</span>
-            <WorkpaceTypeDropDown workspaceId={workspaceId} workspaceType={workspaceType}/>
-            <BsPencilSquare className="ml-auto" />
+            {isEditingName ? (
+              <input
+                type="text"
+               placeholder={originalWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                className="rounded-md text-black border-2 w-32 border-white border-opacity-65 p-1 mr-2"
+              />
+            ) : (
+              <span className="text-xl">{originalWorkspaceName}</span>
+            )}
+             <WorkpaceTypeDropDown workspaceId={workspaceId} workspaceType={workspaceType} />
+            {isEditingName ? (
+              <>
+                <Button className="bg-green-600 text-white w-11 h-6 hover:bg-green-800 " onClick={handleUpdateWorkspaceName}>Save</Button>
+                <Button className="bg-red-600 text-white w-14 h-6 ml-1 hover:bg-orange-700" onClick={handleCancelEdit}>Cancel</Button>
+              </>
+            ) : (
+              <BsPencilSquare className="ml-auto" onClick={handleEditName} />
+            )}
           </div>
           <SheetDescription>
             By default, your workspace is private.
             Make changes to your workspace settings here to add collaborators to share your workspace in real-time.
           </SheetDescription>
           <div className="border-2 border-white border-opacity-65 cursor-pointer h-14 py-6 flex items-center rounded-md p-2 my-2">
-            
-            <InviteCollab workspaceId={workspaceId} workspaceType={workspaceType}/>
-            
+            <InviteCollab workspaceId={workspaceId} workspaceType={workspaceType} />
           </div>
-
           <div className="border-2 border-red-500 cursor-pointer border-opacity-65 h- py-6 flex items-center rounded-md p-2 my-2">
-          
-          <span className="text-red-500">Delete My Workspace</span>
-        </div>
-
+            <span className="text-red-500 font-semibold">Delete My Workspace</span>
+          </div>
         </SheetHeader>
-
         <SheetFooter>
           <SheetClose asChild>
-          
           </SheetClose>
-         
-          
         </SheetFooter>
       </SheetContent>
     </Sheet>

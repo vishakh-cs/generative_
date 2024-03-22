@@ -41,7 +41,7 @@ const AdminSidebar = () => {
 
       <div className="flex flex-col justify-between flex-1 mt-6">
         <nav>
-          <button  onClick={() => router.push('/Admin/adminDashboard')}
+          <button  onClick={() => router.replace('/Admin/adminDashboard')}
             className={`flex items-center px-4 py-2 mt-5 w-full text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700 ${
               selectedIndex === 0 ? 'bg-blue-500 w-full text-white' : '' 
             }`}
@@ -57,7 +57,7 @@ const AdminSidebar = () => {
             className={`flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700 ${
               selectedIndex === 1 ? 'bg-blue-500 text-white' : '' // Add selected styles
             }`}
-            onClick={() => router.push('/Admin/usermanagement')}
+            onClick={() => router.replace('/Admin/usermanagement')}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -82,7 +82,9 @@ const AdminSidebar = () => {
             <path d="M18 15H5C3.89543 15 3 14.1046 3 13V5C3 3.89543 3.89543 3 5 3H18M16 8L21 13L16 18" />
             <path d="M21 13H9" />
           </svg>
-          <span className="mx-4 text-gray-500 hover:text-gray-700 font-medium">Logout</span>
+          <span 
+          onClick={()=>router.replace('/Admin/AdminLogin')}
+          className="mx-4 text-gray-500 hover:text-gray-700 font-medium">Logout</span>
         </button>
       </div>
     </aside>
