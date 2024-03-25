@@ -13,7 +13,7 @@ function LandingWorkspace() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
-      className="bg-gradient-to-b from-blue-300 to-blue-600 min-h-screen flex flex-col items-center justify-center py-20 px-5"
+      className=" min-h-screen flex flex-col items-center justify-center py-20 px-5"
     >
       <motion.div
         initial={{ y: -50, opacity: 0 }}

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 interface StoreState {
   userEmail: string;
+  profileImage: string | null;
+  user_data: any; 
   isLogoutClicked: boolean;
   workspaceName: string;
   isProfileClicked: boolean;
@@ -23,6 +25,8 @@ interface StoreState {
 
 interface StoreActions {
   setUserEmail(userEmail: string): void;
+  profileImage(profileImage?: string): void;
+  setUserData(user_data: any): void;
   setLogoutClicked: (value: boolean) => void;
   resetLogoutClicked: () => void;
   setWorkspaceName: (name: string) => void;
@@ -37,6 +41,8 @@ interface StoreActions {
 
 export const useStore = create<StoreState & StoreActions>((set) => ({
   userEmail: '',
+  profileImage: '',
+  user_data: {},
   isLogoutClicked: false,
   workspaceName: '',
   isProfileClicked: false,
@@ -47,6 +53,8 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   isWorkspaceNameChanged: false,
 
   setUserEmail: (email) => set({ userEmail:  email.toLowerCase() }),
+  setProfileImage:(img)=> set({ profileImage: img}),
+  setUserData: (data) => set({ user_data: data }),
 
   setLogoutClicked: (value) => set({ isLogoutClicked: value }),
   resetLogoutClicked: () => set({ isLogoutClicked: false }),

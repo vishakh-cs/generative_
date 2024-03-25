@@ -8,19 +8,22 @@ import React, { useEffect, useState } from 'react'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import useStore from '@/Stores/store';
+import { parseCookies } from 'nookies';
 
 
-interface LoginProps {}
+interface LoginProps { }
 
 const Login: React.FC<LoginProps> = () => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [WorkspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [collabWorkspace, setCollabWorkspace] = useState<any>(null);
-  const setCollaboratorWorkspace = useStore((state) => state.setCollaboratorWorkspace);
+	const cookies = parseCookies();
+	const isLoggedIn = !!cookies.token;
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [WorkspaceId, setWorkspaceId] = useState<string | null>(null);
+	const [collabWorkspace, setCollabWorkspace] = useState<any>(null);
+	const setCollaboratorWorkspace = useStore((state) => state.setCollaboratorWorkspace);
 
-  const collaboratorWorkspace = useStore((state) => state.collaboratorWorkspace);
+	const collaboratorWorkspace = useStore((state) => state.collaboratorWorkspace);
 
-  const setUserEmail = useStore((state) => state.setUserEmail);
+	const setUserEmail = useStore((state) => state.setUserEmail);
 
 
 	const router = useRouter();
@@ -30,61 +33,61 @@ const Login: React.FC<LoginProps> = () => {
 
 	useEffect(() => {
 		if (status === 'authenticated' && !WorkspaceId) {
-		  router.push('/new_workspace');
+			router.push('/new_workspace');
 		} else if (status === 'authenticated' && WorkspaceId) {
-		  router.push(`/home/${WorkspaceId}`);
+			router.push(`/home/${WorkspaceId}`);
 		}
-	  }, [status, WorkspaceId, router]);
-	  
+	}, [status, WorkspaceId, router]);
+
 
 	// if the googleLogin user has workspace
 	useEffect(() => {
 		const checkWorkspace = async () => {
-		  if (session?.user) {
-			try {
-			  const userInfo = await axios.post('http://localhost:8000/checkHaveWorkspace', {
-				email: session.user.email,
-			  });
-			  if(userInfo.data.token){
-				const token = userInfo.data.token
+			if (session?.user) {
+				try {
+					const userInfo = await axios.post('http://localhost:8000/checkHaveWorkspace', {
+						email: session.user.email,
+					});
+					if (userInfo.data.token) {
+						const token = userInfo.data.token
 
-				document.cookie = `token=${token}; path=/;`;
-			  }
-			  if (userInfo.data.hasWorkspace) {
-				setWorkspaceId(userInfo.data.workspaceId);
-				setCollabWorkspace(userInfo.data.collaboratorWorkspace);
-				setUserEmail(userInfo.data.userEmail);
-                setCollaboratorWorkspace(userInfo.data.collaboratorWorkspace);
+						document.cookie = `token=${token}; path=/;`;
+					}
+					if (userInfo.data.hasWorkspace) {
+						setWorkspaceId(userInfo.data.workspaceId);
+						setCollabWorkspace(userInfo.data.collaboratorWorkspace);
+						setUserEmail(userInfo.data.userEmail);
+						setCollaboratorWorkspace(userInfo.data.collaboratorWorkspace);
 
-				router.push(`/home/${userInfo.data.workspaceId}`);
-			  } else {
-				router.push('/new_workspace');
-			  }
-			} catch  (error: any) {
-			  console.error('Error checking workspace:', error.message);
+						router.push(`/home/${userInfo.data.workspaceId}`);
+					} else {
+						router.push('/new_workspace');
+					}
+				} catch (error: any) {
+					console.error('Error checking workspace:', error.message);
+				}
 			}
-		  }
 		};
-	
+
 		checkWorkspace();
-	  }, [session, router,setCollaboratorWorkspace ,setUserEmail]);
+	}, [session, router, setCollaboratorWorkspace, setUserEmail]);
 
 
-	  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		const formData = new FormData(e.currentTarget);
 		const email = formData.get('email') as string;
-		const password = formData.get('password')as string;
+		const password = formData.get('password') as string;
 
-		  // Check if email and password are provided
-		  if (!email || !password) {
+		// Check if email and password are provided
+		if (!email || !password) {
 			setErrorMessage('Please enter both email and password.');
 			setTimeout(() => {
-			  setErrorMessage(null);
+				setErrorMessage(null);
 			}, 3000);
 			return;
-		  }
+		}
 
 		try {
 			const response = await axios.post('http://localhost:8000/login', {
@@ -116,7 +119,7 @@ const Login: React.FC<LoginProps> = () => {
 					setErrorMessage(null);
 				}, 3000);
 			}
-		} catch (error:any) {
+		} catch (error: any) {
 			console.error('Login failed:', error.message);
 
 			if (error.response) {
@@ -136,9 +139,9 @@ const Login: React.FC<LoginProps> = () => {
 		}
 	};
 
-	if (status === "loading") {
+	if (isLoggedIn ||status === "loading") {
 		return <Loaders />;
-	  }
+	}
 
 	return (
 
@@ -207,7 +210,7 @@ const Login: React.FC<LoginProps> = () => {
 					<hr className="my-6 border-gray-300 w-full" />
 
 					<GoogleAuthButton />
-					
+
 
 					<p className="mt-8">
 						Need an account?{' '}

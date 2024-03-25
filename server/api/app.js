@@ -2,17 +2,46 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
+const http = require('http');
 var logger = require('morgan');
 require('dotenv').config();
+const SocketIo = require('socket.io')
 const cors = require('cors');
+
+// const server = http.createServer(app);
+
+
+// const io =SocketIo(server,{
+//   cors:{
+//     origin:"http://localhost:3000",
+//     methods:["GET","POST"],
+
+//   },
+// });
+
+// io.on('connection', (socket) => {
+//   console.log("A user connected ");
+
+//   socket.on("disconnect", ()=>{
+//     console.log("User disconnected");
+// });
+
+// socket.on("chat message",(msg)=>{
+//   console.log("message"+msg);
+//   io.emit("chat message ",msg); 
+//   });
+// });
 
 const MongodbUrl = process.env.MONGODBURL
 
 var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var workspaceRouter  =require('./routes/workspace');
-
+var chatRouter = require('./routes/ChatRoute')
+ 
 var app = express();
+
+
 
 const corsOptions = {
   origin: 'http://localhost:3000',
@@ -25,6 +54,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 var mongoose = require('mongoose');
+const { Socket } = require('dgram');
 mongoose.connect(MongodbUrl, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -44,6 +74,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', adminRouter);
 app.use('/', usersRouter);
 app.use('/',workspaceRouter);
+app.use('/',chatRouter);
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

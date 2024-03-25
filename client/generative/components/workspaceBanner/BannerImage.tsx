@@ -4,6 +4,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useEdgeStore } from '@/lib/edgestore';
 import { BannerSkeleton } from '../Loaders/bannerSkelton/page';
+import useStore from '@/Stores/store';
 
 interface BannerImageProps {
   workspaceId: string;
@@ -34,17 +35,23 @@ const BannerImage: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
   const [forceUpdate, setForceUpdate] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
+  const [userData,setUserData]=useState<any | null>(null);
 
   const { edgestore } = useEdgeStore();
 
-  console.log("my workspace workspace", workspace);
+  const store = useStore();
+  
+  
 
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
         const response = await axios.get(`http://localhost:8000/workspace/${workspaceId}/${pageId}`);
+        setUserData(response.data.user);
         setWorkspace(response.data);
-      } catch (error) {
+        store.setUserData(response.data.user)
+        store.setProfileImage(response.data.user.profileImageUrl);
+      } catch (error:any) {
         console.error('Error fetching workspace:', error.message);
       }
     };

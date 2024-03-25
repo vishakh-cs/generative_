@@ -117,7 +117,20 @@ const fechUserData = async (req, res) => {
     if (!page) {
       return res.status(404).json({ success: false, message: 'Page not found' });
     }
+
+    const user = await UserModel.findById(workspace.owner);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     const responseData = {
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImageUrl: user.profileImageUrl,
+      },
       workspace: {
         _id: workspace._id,
       },
@@ -463,8 +476,8 @@ const deletePage = async (req, res) => {
     }
 
     await Workspace.updateMany(
-      { pages: pageId }, 
-      { $pull: { pages: pageId } } 
+      { pages: pageId },
+      { $pull: { pages: pageId } }
     );
     await PageSchema.findByIdAndDelete(pageId);
 
@@ -515,7 +528,7 @@ const getCollabUser = async (req, res) => {
 
     const collaboratorIds = workspace.collaborators;
 
-    console.log("collaboratorIds",collaboratorIds);
+    console.log("collaboratorIds", collaboratorIds);
 
     const collaborators = await UserModel.find({ _id: { $in: collaboratorIds } });
 
@@ -541,7 +554,7 @@ const removeCollaborator = async (req, res) => {
       return res.status(404).json({ error: 'Workspace not found or user not found in collaborators' });
     }
 
-    res.json({ success:true , message: 'User removed from collaboration successfully' });
+    res.json({ success: true, message: 'User removed from collaboration successfully' });
   } catch (error) {
     console.error('Error removing user from collaboration:', error);
     res.status(500).json({ error: 'Internal server error' });
