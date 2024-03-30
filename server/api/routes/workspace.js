@@ -24,6 +24,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+router.get('/protected_workspace/:workspaceId',workspaceController.ProtectedRouteData)
+
 router.post('/BannerImageURL', workspaceController.bannerImageUpload);
 
 router.post('/sidebar_data',workspaceController.sidebarUser)
@@ -61,6 +63,10 @@ router.post('/remove_collaborator',workspaceController.removeCollaborator);
 router.post('/changeUsername',workspaceController.changeUsername);
 
 router.get('/profileImages/:userId',workspaceController.getProfileImage);
+
+router.get('/get_otherCollab_users',workspaceController.getOtherCollabUsers);
+
+router.post('/leave_collaboration' ,workspaceController.leaveCollaboration );
 
 
 

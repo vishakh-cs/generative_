@@ -58,7 +58,7 @@ const Login: React.FC<LoginProps> = () => {
 						setCollabWorkspace(userInfo.data.collaboratorWorkspace);
 						setUserEmail(userInfo.data.userEmail);
 						setCollaboratorWorkspace(userInfo.data.collaboratorWorkspace);
-
+						localStorage.setItem('userEmail', userInfo.data.userEmail);
 						router.push(`/home/${userInfo.data.workspaceId}`);
 					} else {
 						router.push('/new_workspace');
@@ -96,11 +96,12 @@ const Login: React.FC<LoginProps> = () => {
 			});
 
 
-			console.log(response);
+			console.log("response from server", response.data);
 
 			if (response.data.success) {
 
 				const token = response.data.token;
+				localStorage.setItem('userEmail',response.data.user.email);
 
 				document.cookie = `token=${token}; path=/;`;
 				console.log(token);

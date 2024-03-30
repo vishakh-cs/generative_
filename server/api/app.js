@@ -37,7 +37,8 @@ const MongodbUrl = process.env.MONGODBURL
 var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var workspaceRouter  =require('./routes/workspace');
-var chatRouter = require('./routes/ChatRoute')
+var chatRouter = require('./routes/ChatRoute');
+var messageRouter = require('./routes/MessageRouter');
  
 var app = express();
 
@@ -75,6 +76,7 @@ app.use('/', adminRouter);
 app.use('/', usersRouter);
 app.use('/',workspaceRouter);
 app.use('/',chatRouter);
+app.use('/',messageRouter);
 
 
 

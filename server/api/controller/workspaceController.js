@@ -6,6 +6,30 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 
+
+const ProtectedRouteData = async (req, res) => {
+  try {
+    const workspaceId = req.params.workspaceId;
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: 'Workspace not found' });
+    }
+
+    const user = await UserModel.findById(workspace.owner);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = {_id: user._id, name: user.username, email: user.email,profileImageUrl: user.profileImageUrl,};
+
+    res.status(200).json(userData,);
+  } catch (error) {
+    console.error('Error fetching workspace and page data:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 const sidebarUser = async (req, res) => {
   try {
     const { workspaceId } = req.body;
@@ -23,6 +47,7 @@ const sidebarUser = async (req, res) => {
 
 
     const userDataForSidebar = {
+      id: user.id,
       username: user.username,
       email: user.email,
       profileImageUrl: user.profileImageUrl,
@@ -30,12 +55,14 @@ const sidebarUser = async (req, res) => {
     };
 
     const collaboratorWorkspace = await Workspace.findOne({ collaborators: user._id });
+    let collaboratorWorkspaceId = '';
     let collaboratorWorkspacePages = [];
     let collaboratorWorkspacePageNames = [];
     let collaboratorWorkspacePageIds = [];
     let collaboratorWorkspaceName = '';
     let collaboratorWorkspaceLogo = '';
     if (collaboratorWorkspace) {
+      collaboratorWorkspaceId = collaboratorWorkspace._id;
       collaboratorWorkspacePages = await PageSchema.find({ _id: { $in: collaboratorWorkspace.pages }, Trashed: false });
       collaboratorWorkspacePageNames = collaboratorWorkspacePages.map(page => page.PageName);
       collaboratorWorkspacePageIds = collaboratorWorkspacePages.map(page => page._id);
@@ -45,18 +72,27 @@ const sidebarUser = async (req, res) => {
 
     const workspaces = await Workspace.find({ owner: user._id });
 
-    // const pages = workspace.pages || [];
+    const workspaceData = [];
+    for (const workspace of workspaces) {
+      const pages = await PageSchema.find({ _id: { $in: workspace.pages }, Trashed: false });
+      const pageNames = pages.map(page => page.PageName);
+      const pageIds = pages.map(page => page._id);
 
-    const pages = await PageSchema.find({ _id: { $in: workspace.pages }, Trashed: false });
+      workspaceData.push({
+        id: workspace._id,
+        name: workspace.name,
+        logo: workspace.workspaceLogoIndex,
+        pages: pages,
+        pageNames: pageNames,
+        pageIds: pageIds,
+      });
+    }
 
-    const pageNames = pages.map(page => page.PageName);
-
-    const pageData = await PageSchema.find({ PageName: { $in: pageNames } });
-
-    const pageId = pageData.map(page => page._id);
+    console.log("workspaceData", workspaceData);
 
     res.status(200).json({
-      success: true, data: userDataForSidebar, workspaces, pages, pageNames, pageId, collaboratorWorkspace: {
+      success: true, data: userDataForSidebar, workspaces: workspaceData, collaboratorWorkspace: {
+        id: collaboratorWorkspaceId,
         name: collaboratorWorkspaceName,
         collablogo: collaboratorWorkspaceLogo,
         pages: collaboratorWorkspacePages,
@@ -148,7 +184,6 @@ const fechUserData = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-
 
 
 const addPage = async (req, res) => {
@@ -412,27 +447,27 @@ const addToTrash = async (req, res) => {
 
 const fetchTrashData = async (req, res) => {
   try {
-    // Extract workspaceId from the request parameters
     const { workspaceId } = req.params;
 
-    // Find the workspace document by its ID
     const workspace = await Workspace.findById(workspaceId);
 
-    // If the workspace does not exist, return an error
     if (!workspace) {
       return res.status(404).json({ error: "Workspace not found" });
     }
 
-    // Extract the page IDs from the workspace's pages array
-    const pageIds = workspace.pages;
+    const pages = workspace.pages;
 
-    // Find trashed pages that belong to the workspace
+    console.log("pages123", pages);
+
+    // Find trashed pages based on their IDs
     const trashedPages = await PageSchema.find({
-      _id: { $in: pageIds }, // Match page IDs in the workspace's pages array
+      _id: { $in: pages },
       Trashed: true
     });
 
-    // Extract page IDs and names
+    console.log("trashedPages", trashedPages);
+
+    // Extract page details
     const trashedPagesData = trashedPages.map(page => ({ id: page._id, name: page.PageName }));
 
     console.log("trashedPagesData", trashedPagesData);
@@ -444,6 +479,7 @@ const fetchTrashData = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 const restoreFromTrash = async (req, res) => {
   try {
@@ -605,9 +641,71 @@ const getProfileImage = async (req, res) => {
 };
 
 
+const getOtherCollabUsers = async (req, res) => {
+  console.log("umm");
+  try {
+    const { workspaceId } = req.query;
+
+    if (!workspaceId) {
+      return res.status(400).json({ success: false, message: 'Workspace ID is required' });
+    }
+    const workspace = await Workspace.findById(workspaceId);
+
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: 'Workspace not found' });
+    }
+
+    const user = await UserModel.findById(workspace.owner);
+
+    const userId = user._id.toString()
+
+    const workspaces = await Workspace.find({ collaborators: userId });
+
+    // Fetch the owner data for each workspace in the workspaces array
+    const owner = await Promise.all(workspaces.map(async (ws) => {
+      const ownersData = await UserModel.findById(ws.owner);
+      return ownersData;
+    }));
+
+    console.log("workspaces", workspaces);
+    console.log("ownersData", owner);
+
+    return res.status(200).json({ success: true, owner: owner[0] });
+  } catch (error) {
+    console.error('Error fetching collaborating users:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+const leaveCollaboration = async (req, res) => {
+  try {
+    const { workspaceId, userId } = req.body;
+
+    console.log("req.body", req.body);
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' });
+    }
+    const collaboratorIndex = workspace.collaborators.indexOf(userId);
+    if (collaboratorIndex === -1) {
+      return res.status(400).json({ error: 'User is not a collaborator in the workspace' });
+    }
+    workspace.collaborators.splice(collaboratorIndex, 1);
+
+    await workspace.save();
+
+    return res.status(200).json({ message: 'Left collaboration successfully' });
+  } catch (error) {
+    console.error('Error leaving collaboration:', error);
+    return res.status(500).json({ error: 'Failed to leave collaboration' });
+  }
+};
+
 
 
 module.exports = {
+  ProtectedRouteData,
   sidebarUser,
   bannerImageUpload,
   fechUserData,
@@ -627,5 +725,7 @@ module.exports = {
   removeCollaborator,
   changeUsername,
   getProfileImage,
+  getOtherCollabUsers,
+  leaveCollaboration,
 
 };

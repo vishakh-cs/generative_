@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import useStore from '@/Stores/store'
 import LogoutModal from '@/components/Sidebar/LogoutModal';
 import ProtectedRoutes from '@/components/ProtectedRoutes/page';
@@ -10,20 +10,58 @@ import CollaborativeEditor from '@/components/CollaborativeEditor/Editor';
 import { ClientSideSuspense } from '@liveblocks/react';
 import LandingWorkspace from '@/components/LandingWorkspace/page';
 import { CollabAlertBox } from '@/components/CollabAlertBox/page';
-
-
-
+import { useRouter } from 'next/navigation';
+import Loaders from '@/components/Loaders/page';
 
 
 export default function workspaceid({ params }) {
 
+  const router = useRouter();
+
   const isLogoutClicked = useStore((state) => state.isLogoutClicked);
   const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
+  const [userData, setUserData] = useState(null);
+  const userEmail = localStorage.getItem('userEmail');
+  const [loading, setLoading] = useState(true);
+
+  console.log("userData",userData);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/protected_workspace/${params.workspaceid}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.email);
+          if (data.email !== userEmail){
+            router.push('/404')
+          }
+        } else {
+          throw new Error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false); 
+      }
+    };
+  
+    fetchUserData();
+  }, [params.workspaceid , userEmail, router]);
 
   console.log('isLogoutClicked:', isLogoutClicked);
 
+  if (loading) {
+    return <Loaders />
+  }
+
+
+  if (!userData) {
+    return null; // Or a loading indicator
+ }
+
   return (
-    <ProtectedRoutes>
+    <ProtectedRoutes UserEmail={userData}>
       <div className='bg-workspaceColor min-h-screen'>
         {isLogoutClicked ? (
           <LogoutModal onClose={() => resetLogoutClicked()} />

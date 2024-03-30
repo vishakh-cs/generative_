@@ -11,14 +11,8 @@ function ProfileIcon({ workspaceId, pageId }) {
 
     return (
         <div>
-            <ProfileIconDropDown user_data={user_data}/>
-            
-            {!user_data.profileImageUrl && user_data.email && (
-                <div className='bg-green-600 w-7 h-7 mr-2 rounded-full'>
-                     title={userEmail}
-                   
-                </div>
-            )}
+            <ProfileIconDropDown workspaceId={workspaceId} pageId={pageId} user_data={user_data}/>
+         
         </div>
     )
 }

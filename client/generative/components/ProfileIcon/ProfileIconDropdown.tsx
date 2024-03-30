@@ -10,37 +10,130 @@ import {
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { PiPaperPlaneTilt } from "react-icons/pi";
-// import io from 'socket.io-client';
+import Conversation from './Conversation';
+import axios from 'axios';
+import InputEmoji from 'react-input-emoji'
 
-// const ProfileIconDropDown = ({ user_data }) => {
+interface User {
+  _id: string;
+  email: string;
+  profileImageUrl: string;
 
-//   useEffect(() => {
-//     // const socket = io('http://localhost:8000');
+}
 
-//     socket.on('connect_error', (error) => {
-//       console.error("Error connecting to Socket.io server:", error);
-//     });
-    
-
-//     socket.emit('chat message', 'Hello from client!');
-
-
-//     return () => {
-    
-//       socket.disconnect();
-//     };
-//   }, []);
-
-
+const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_data: User }> = ({ workspaceId, pageId, user_data }) => {
   const [open, setOpen] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
-  const dropdownRef = useRef(null);
-  const modalRef = useRef(null);
+  const [chats, setChats] = useState<any[]>([]);
+  const [collaboratingUsers, setCollaboratingUsers] = useState<User[]>([]);
+  const [chatCollaborator, setChatCollaborator] = useState<User | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [chatId, setChatId] = useState(null);
+  const [owner, setOwner] = useState<User | null>(null);
+
+  const [messages, setMessages] = useState([]);
+
+  console.log("chats:", chats);
+
+
+  const handleChange = (newMessage) => {
+    setNewMessage(newMessage)
+  }
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    try {
+      const message = {
+        senderId: user_data._id,
+        text: newMessage,
+        chatId: chatId,
+      };
+
+      const response = await axios.post('http://localhost:8000/addMessage/', message);
+      console.log('Message sent successfully:', response.data);
+      setMessages([...messages, response.data]);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+
+
+  console.log("collaboratingUsers123", collaboratingUsers);
 
   useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
-        modalRef.current && !modalRef.current.contains(event.target)) {
+    const fetchData = async () => {
+      try {
+        console.log("user_data",user_data);
+        
+        const response = await fetch(`http://localhost:8000/chatUser/${user_data._id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setChats(data);
+          console.log("data", data);
+        } else {
+          throw new Error('Failed to fetch chats');
+        }
+      } catch (error) {
+        console.error('Error fetching chats:', error);
+      }
+    };
+
+    fetchData();
+  }, [user_data]);
+  
+
+  // fetch collabdata
+
+  useEffect(() => {
+    const fetchCollaboratingUsers = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/get_collaborating_users`, {
+          params: {
+            workspaceId: workspaceId,
+          },
+        });
+
+        console.log("response.data.collaborators", response.data.collaborators);
+
+        setCollaboratingUsers(response.data.collaborators);
+      } catch (error: any) {
+        console.error("Error fetching collaborating users:", error);
+      }
+    };
+
+    fetchCollaboratingUsers();
+  }, [workspaceId]);
+
+
+  // fetch for collab data
+
+  useEffect(() => {
+    const fetchCollaboratingUsers = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/get_otherCollab_users`, {
+          params: {
+            workspaceId: workspaceId,
+          },
+        });
+
+        setOwner(response.data.owner);
+      } catch (error: any) {
+        console.error("Error fetching collaborating users:", error);
+      }
+    };
+
+    fetchCollaboratingUsers();
+  }, [workspaceId]);
+
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+        modalRef.current && !modalRef.current.contains(event.target as Node)) {
         setOpen(false);
         setShowChatModal(false);
       }
@@ -53,18 +146,34 @@ import { PiPaperPlaneTilt } from "react-icons/pi";
     };
   }, []);
 
-  // Sample collaborators data
-  const collaborators = ['Collaborator 1'];
+
 
   // Function to handle opening chat modal
-  const handleChatClick = (collaborator) => {
+  const handleChatClick = (collaborator: User) => {
+    
+    setChatCollaborator(collaborator);
     setShowChatModal(true);
+    console.log("THe chart datat",chats);
+    
+    setChatId(chats[0]?._id);
   };
+
+
+
 
   return (
     <>
       <motion.div animate={open ? "open" : "closed"} className="relative" ref={dropdownRef}>
         <button onClick={() => setOpen((pv) => !pv)}>
+
+            
+        {!user_data.profileImageUrl && user_data.email && (
+                <div className='bg-green-600 w-7 h-7 mr-2 mt-2 rounded-full'>
+                    
+                   
+                </div>
+            )}
+
           {user_data.profileImageUrl && (
             <Image
               src={user_data.profileImageUrl}
@@ -87,24 +196,54 @@ import { PiPaperPlaneTilt } from "react-icons/pi";
           <Option setOpen={setOpen} Icon={FiEdit} text={user_data.email} />
 
           {/* Render Collaborators list below email option */}
-          <li className="flex flex-col gap-1">
-            <span className="font-sans text-lg text-center">Collaborators</span>
+          <li className="flex flex-col gap-1 h-20 border border-white">
+            <span className="font-sans text-lg text-center text-transparent bg-clip-text bg-gradient-to-br from-pink-400 via-yellow-400 to-red-500 ">Collaborators</span>
             <div className="overflow-y-auto max-h-full">
-              {collaborators.length === 0 ? (
-                <span className="text-xs">Empty</span>
-              ) : (
-                collaborators.map((collaborator, index) => (
+
+              {/* Render owner users */}
+              {owner && owner.email !== user_data.email && (
+                // Render owner's email and chat icon
+                <div className="flex items-center justify-between text-xs">
+                  <Image
+                    src={owner.profileImageUrl}
+                    alt="Profile"
+                    width={30}
+                    height={30}
+                    className="w-7 h-7 mr-2 rounded-full overflow-hidden"
+                    title={owner.email}
+                  />
+                  <span>{owner.email}</span>
+                  <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) =>{e.preventDefault(); handleChatClick(owner)}}>
+                    <span className='text-sm font-semibold'>chat</span>
+                    <FiMessageSquare size={15} />
+                  </button>
+                </div>
+              )}
+              {/* Render collaborating users */}
+              {collaboratingUsers.map((collaborator, index) => (
+                // Check if the collaborator is not the current user
+                collaborator.email !== user_data.email && (
                   <div key={index} className="flex items-center justify-between text-xs">
-                    <span>{collaborator}</span>
-                    <button className="text-indigo-500 flex items-center gap-1" onClick={() => handleChatClick(collaborator)}>
-                      <span className='text-sm font-semibold'>chat</span>
+                    <Image
+                      src={collaborator.profileImageUrl}
+                      alt="Profile"
+                      width={30}
+                      height={30}
+                      className="w-7 h-7 mr-2 rounded-full overflow-hidden"
+                      title={collaborator.email}
+                    />
+                    <span>{collaborator.email}</span>
+                    <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) =>{e.preventDefault(); handleChatClick(collaborator)}}>
+                      <span className='text-sm font-semibold'>chating</span>
                       <FiMessageSquare size={15} />
                     </button>
                   </div>
-                ))
-              )}
+                )
+              ))}
             </div>
           </li>
+
+
 
           {/* Render other options */}
           <Option setOpen={setOpen} Icon={FiPlusSquare} text="Add Collaborator" />
@@ -114,24 +253,41 @@ import { PiPaperPlaneTilt } from "react-icons/pi";
       </motion.div>
 
       {/* Modal for chat */}
-      {showChatModal && (
+      {showChatModal && chatCollaborator && (
         <div ref={modalRef} className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50" onClick={() => setShowChatModal(false)}>
           <div className="bg-white p-4 rounded-md shadow-md absolute right-10 top-1/2 transform -translate-y-1/2 h-4/5 w-96 flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className='flex items-center bg-slate-800 w-full h-10 rounded-t-md'>
-              <span className='w-8 h-8 mt-1 ml-2 bg-gray-500 rounded-full'></span>
-              <h2 className='text-white ml-2 font-bold py-2'>Collaborator Name</h2>
+              <Image
+                src={chatCollaborator.profileImageUrl}
+                alt="Profile"
+                width={30}
+                height={30}
+                className="w-7 h-7 mt-1 ml-2 rounded-full"
+              />
+              <h2 className='text-white ml-2 font-bold py-2'>{chatCollaborator.email}</h2>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {/* Chat messages */}
+            <div className="flex-1 overflow-y-auto text-black">
+              {chats?.map((chat) => (
+                <div key={chat._id}>
+                  <Conversation chat={chat} currentUserId={user_data._id} setMessages={setMessages} messages={messages} />
+                </div>
+              ))}
             </div>
-            <div className="flex justify-around gap-3 items-center bg-white rounded-b-md">
-              <input type="text" placeholder="Type your message..." className=" p-2 rounded-l-md border" />
-              <PiPaperPlaneTilt size={20} color='black' />
+            <div className="flex justify-around gap-3 items-center bg-white rounded-b-md mt-1">
+              <InputEmoji
+                value={newMessage}
+                onChange={handleChange}
+              />
+             
+              <PiPaperPlaneTilt
+                onClick={handleSend}
+                size={20} color='black' />
             </div>
             <button onClick={() => setShowChatModal(false)}>Close</button>
           </div>
         </div>
       )}
+
 
     </>
   );

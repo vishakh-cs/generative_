@@ -21,6 +21,7 @@ import { SettingsSlider } from './SettingsSlider/page';
 import { FaRegTrashAlt } from "react-icons/fa";
 import { CiTrash } from "react-icons/ci";
 import dynamic from 'next/dynamic';
+import { FaArrowLeftLong } from "react-icons/fa6";
 
 const DynamicTrashBar = dynamic(() => import('./TrashBar/page'), { ssr: false });
 
@@ -59,7 +60,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
   console.log("collabWorkspaces,collaboratorWorkspaceLogo", collabWorkspaces);
 
-  console.log("isProfileChange", isProfileChange);
+  console.log("pages", pages);
+  console.log("Page_id", Page_id);
+
+  console.log("workspaces", workspaces);
 
   const router = useRouter();
 
@@ -94,8 +98,9 @@ export default function Sidebar({ children, params }: SidebarProps) {
       });
 
       const { data, workspaces, pages: pageIds, pageNames, pageId, collaboratorWorkspace: collabWs } = response.data;
-
-      setPage_id(pageId)
+      console.log("workspaces1234567", workspaces)
+      const workspacePageIds = workspaces.map(workspace => workspace.pageIds).flat(); // Extract all page IDs and flatten the array
+      setPage_id(workspacePageIds);
       setPages(pageNames)
       setWorkspaceId(params.workspaceid)
       setUserData(data);
@@ -116,20 +121,69 @@ export default function Sidebar({ children, params }: SidebarProps) {
   }, [params.workspaceId, isPageRestored, isWorkspaceNameChanged, isProfileChange]);
 
 
-  const createNewWorkspace = async () => {
+  const createWorkspace = async (e) => {
+    e.preventDefault();
     try {
-      console.log('Creating a new workspace...');
+      router.push(`/home/CreateWorkspace?email=${userData.email}`);
     } catch (error: any) {
       console.error('Error creating new workspace:', error.message);
     }
   };
-
   const handleLogout = () => {
     setIsLogoutClicked(true);
   };
 
   // page click
-  const handleProfileClick = (pageId: string) => {
+  const handleProfileClick = (pageId: string, workspaceId: string) => {
+    console.log("pageIdpageId", pageId)
+    if (Page_id) {
+      router.replace(`/home/${workspaceId}/${pageId}`);
+      setSelectedPage(pageId);
+    } else {
+      console.error('Invalid pageId:', pageId);
+    }
+  };
+
+
+  // handle workspace click
+
+  const handleWorkspaceClick = (workspaceId: string) => {
+    if (!workspaceId) {
+      console.error('Invalid workspace ID:', workspaceId);
+      return;
+    }
+  
+    // Check if the clicked workspace ID exists in collabWorkspaces
+    const collabWorkspace = collabWorkspaces;
+    if (collabWorkspace && collabWorkspace.id === workspaceId) {
+      // Handle collaboration workspace click
+      if (collabWorkspace.pages && collabWorkspace.pages.length > 0) {
+        router.replace(`/home/${workspaceId}/${collabWorkspace.pages[0]._id}`);
+        setSelectedPage(collabWorkspace.pages[0]._id);
+      } else {
+        router.replace(`/home/${workspaceId}`);
+        setSelectedPage(null);
+      }
+    } else {
+      // Handle local workspace click
+      const workspace = workspaces.find(w => w.id === workspaceId);
+      if (!workspace) {
+        console.error('Workspace not found:', workspaceId);
+        return;
+      }
+  
+      if (workspace.pageIds.length > 0) {
+        router.replace(`/home/${workspaceId}/${workspace.pageIds[0]}`);
+        setSelectedPage(workspace.pageIds[0]);
+      } else {
+        router.replace(`/home/${workspaceId}`);
+        setSelectedPage(null);
+      }
+    }
+  };
+  
+  // page click
+  const handleCollabClick = (pageId: string) => {
     if (Page_id) {
       router.replace(`/home/${params.workspaceid}/${pageId}`);
       setSelectedPage(pageId);
@@ -139,10 +193,11 @@ export default function Sidebar({ children, params }: SidebarProps) {
   };
 
 
+
   const handleModalSubmit = async (pageName: string) => {
     try {
       const newPage = pageName.trim() || `Page ${pages.length + 1}`;
-      setPages((prevPages) => [...prevPages, newPage]);
+      setPages((prevPages = []) => [...prevPages, newPage]);
 
       console.log(`Added a new page: ${newPage}`);
 
@@ -167,23 +222,28 @@ export default function Sidebar({ children, params }: SidebarProps) {
     }
   };
 
-  const moveToTrash = async (page: string) => {
+  const moveToTrash = async (pageId: string, pageName: string) => {
     try {
       const response = await axios.post('http://localhost:8000/add_to_trash', {
-        selectedPage,
+        selectedPage: pageId,
       });
-      setPages(prevPages => prevPages.filter(p => p !== page));
 
-      setPage_id(prevPageIds => prevPageIds.filter(id => id !== selectedPage));
       toast.success('Page moved to trash successfully.');
-      // Check if there are no more pages
-      if (pages.length === 0) {
+      fetchData();
+      
+      if (pages && pages.length > 0) {
+        // Remove the trashed page from the pages array
+        setPages(prevPages => prevPages.filter(p => p !== pageName));
 
-        router.replace(`/home/${params.workspaceid}`);
-        setSelectedPage(null);
-      } else {
+        // Check if the trashed page was the last one
+        if (pages.length === 1) {
+          router.replace(`/home/${params.workspaceid}`);
+          setSelectedPage(null);
+          return;
+        }
+
         // Switch to the next or previous page
-        const currentIndex = pages.findIndex(p => p === page);
+        const currentIndex = pages.findIndex(p => p === pageName);
         if (currentIndex !== -1) {
           const nextIndex = currentIndex + 1;
           const prevIndex = currentIndex - 1;
@@ -195,6 +255,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
             setSelectedPage(Page_id[prevIndex]);
           }
         }
+      } else {
+        // Handle the case where pages array is empty
+        router.replace(`/home/${params.workspaceid}`);
+        setSelectedPage(null);
       }
     } catch (error) {
       console.error('Error moving page to trash:', error);
@@ -209,6 +273,29 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const selectedPageClass = 'bg-indigo-200 text-indigo-800 dark:bg-gray-700 dark:text-white';
 
 
+  // leave workspace 
+
+  const handleLeaveCollab = async () => {
+    try {
+      if (!collabWorkspaces || !collabWorkspaces.id) {
+        console.error('Collaborator workspace ID not found');
+        return;
+      }
+
+      const response = await axios.post('http://localhost:8000/leave_collaboration', {
+        workspaceId: collabWorkspaces.id,
+        userId: userData.id
+      });
+
+      toast.success('Left collaboration successfully');
+      fetchData();
+      console.log('Left collaboration successfully');
+
+    } catch (error) {
+      console.error('Error leaving collaboration:', error);
+      toast.error('Failed to leave collaboration.');
+    }
+  };
 
   const imgPaths = [
     "/Assets/workspace1.jpg",
@@ -250,7 +337,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
         {expanded && (
           <>
             <button
-              onClick={createNewWorkspace}
+              onClick={createWorkspace}
               className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
             >
               <span className={twMerge('text-gray-600 dark:text-gray-300')}>Create New Workspace +</span>
@@ -258,38 +345,63 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
             <DynamicTrashBar workspaceId={workspaceid} />
 
-            {/* Render regular workspaces */}
-            {workspaces.map((workspace, index) => (
-              <button
-                key={workspace.id}
-                onClick={() => console.log(`Switch to workspace: ${workspace.name}`)}
-                className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
-              >
-                {workspace.workspaceLogoIndex != null && (
-                  <Image
-                    src={imgPaths[workspace.workspaceLogoIndex]}
-                    alt={`Workspace Logo ${index}`}
-                    width={20}
-                    height={20}
-                    loading="lazy"
-                  />
-                )}
-                <span className={twMerge('flex justify-between items-center w-full')}>
-                  <span className={twMerge('text-gray-600 dark:text-gray-300 ml-4')}>
-                    {workspace.name}
-                  </span>
-                  <span className='flex justify-between'>
-                    <SettingsSlider workspaceId={workspaceid} workspaceName={workspace.name}
-                      workspaceLogoIndex={workspace.workspaceLogoIndex}
-                      workspaceType={workspace.type} />
 
-                    <IoMdAdd
-                      onClick={addNewPage}
-                      size={16}
-                      className='ml-4 mt-1' />
+            {workspaces.map((workspace, index) => (
+              <div key={workspace.id}>
+                {/* Render workspace button */}
+                <button
+                  onClick={() => handleWorkspaceClick(workspace.id)}
+                  className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
+                >
+                  {/* Workspace logo */}
+                  {workspace.logo && (
+                    <Image
+                      src={imgPaths[workspace.logo]}
+                      alt={`Workspace Logo ${index}`}
+                      width={20}
+                      height={20}
+                      loading="lazy"
+                    />
+                  )}
+                  {/* Workspace name */}
+                  <span className={twMerge('flex justify-between items-center w-full')}>
+                    <span className={twMerge('text-gray-600 dark:text-gray-300 ml-4')}>
+                      {workspace.name}
+                    </span>
+                    {/* Workspace actions: settings and add new page */}
+                    <span className='flex justify-between'>
+                      <SettingsSlider workspaceId={workspace.id} workspaceName={workspace.name}
+                        workspaceLogoIndex={workspace.logo}
+                        workspaceType={workspace.type} />
+
+                      <IoMdAdd
+                        onClick={addNewPage}
+                        size={16}
+                        className='ml-4 mt-1' />
+                    </span>
                   </span>
-                </span>
-              </button>
+                </button>
+
+                {/* Render pages for this workspace */}
+                {workspace.pageNames.map((pageName, pageIndex) => (
+                  <button
+                    key={pageIndex}
+                    className={twMerge(`
+                     ${buttonBaseClass}
+                     ${transitionClass}
+                     ${selectedPage === workspace.pageIds[pageIndex] ? selectedPageClass : ''}
+                    `)}
+                    onClick={() => handleProfileClick(workspace.pageIds[pageIndex], workspace.id)}
+                  >
+                    <CiFileOn size={20} className="ml-3" />
+                    <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
+                      {pageName}
+                    </span>
+                    {/* Include trash functionality for pages */}
+                    <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(workspace.pageIds[pageIndex], pageName)} />
+                  </button>
+                ))}
+              </div>
             ))}
 
             <div className="sidebar-content overflow-y-auto max-h-96">
@@ -299,27 +411,8 @@ export default function Sidebar({ children, params }: SidebarProps) {
                 </div>
               ) : (
                 <>
-                  {/* Render workspace pages */}
-                  {pages && pages.map((page, pageIndex) => (
-                    <button
-                      key={pageIndex}
-                      className={twMerge(`
-                      ${buttonBaseClass}
-                      ${transitionClass}
-                      ${Page_id !== null && selectedPage === Page_id[pageIndex] ? selectedPageClass : ''}
-                    `)}
-                      onClick={() => Page_id && handleProfileClick(Page_id[pageIndex])}
-                    >
-                      <CiFileOn size={20} className="ml-3" />
-                      <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
-                        {page}
-                      </span>
-                      <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(page)} />
-                    </button>
-                  ))}
-
                   {/* Render collaborative workspace if available */}
-                  {collabWorkspaces?.pages?.length > 0 && ( 
+                  {collabWorkspaces?.pages?.length > 0 && (
                     <div className="collaborator-pages">
                       {/* Collab workspace header */}
                       <h3 className="flex justify-center text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text mt-4 ml-4">Collaborator Workspace</h3>
@@ -334,7 +427,12 @@ export default function Sidebar({ children, params }: SidebarProps) {
                             className="mr-2"
                           />
                         )}
-                        <span>{collabWorkspaces.name}</span>
+                        <button
+                          className="font-sans"
+                          onClick={() => handleWorkspaceClick(collabWorkspaces.id)}
+                        >
+                          {collabWorkspaces.name}
+                        </button>
                       </div>
                       {/* Collab workspace pages */}
                       {collabWorkspaces.pages.map((collabPage, index) => (
@@ -345,7 +443,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
                           ${transitionClass}
                           ${selectedPage === collabPage._id ? selectedPageClass : ''}
                         `)}
-                          onClick={() => handleProfileClick(collabPage._id)}
+                          onClick={() => handleCollabClick(collabPage._id)}
                         >
                           <CiFileOn size={20} className="ml-3" />
                           <span className={twMerge('text-gray-600 dark:text-gray-300 ml-7')}>
@@ -357,8 +455,11 @@ export default function Sidebar({ children, params }: SidebarProps) {
                       ))}
 
                       {/* Leave collaboration button */}
-                      <button className="flex text-transparent text-center justify-center bg-clip-text bg-gradient-to-br from-blue-500 to-purple-500 font-semibold text-lg mt-6 p-8 ml-6 border-none focus:outline-none">
+                      <button
+                        onClick={handleLeaveCollab}
+                        className="flex text-transparent  gap-3 text-center justify-center bg-clip-text bg-gradient-to-br from-blue-500 to-purple-500 font-semibold text-base mt-6 p-8 ml-6 border-none focus:outline-none">
                         <span>Leave Collaboration</span>
+                        <FaArrowLeftLong className='mt-1 opacity-55' size={18} color='white' />
                       </button>
                     </div>
                   )}
