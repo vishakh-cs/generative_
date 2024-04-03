@@ -19,6 +19,7 @@ const Login: React.FC<LoginProps> = () => {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [WorkspaceId, setWorkspaceId] = useState<string | null>(null);
 	const [collabWorkspace, setCollabWorkspace] = useState<any>(null);
+	const [userId,setUserId]=useState<string | null>(null);
 	const setCollaboratorWorkspace = useStore((state) => state.setCollaboratorWorkspace);
 
 	const collaboratorWorkspace = useStore((state) => state.collaboratorWorkspace);
@@ -35,7 +36,7 @@ const Login: React.FC<LoginProps> = () => {
 		if (status === 'authenticated' && !WorkspaceId) {
 			router.push('/new_workspace');
 		} else if (status === 'authenticated' && WorkspaceId) {
-			router.push(`/home/${WorkspaceId}`);
+			router.push(`/home/${userId}/${WorkspaceId}`);
 		}
 	}, [status, WorkspaceId, router]);
 
@@ -58,8 +59,9 @@ const Login: React.FC<LoginProps> = () => {
 						setCollabWorkspace(userInfo.data.collaboratorWorkspace);
 						setUserEmail(userInfo.data.userEmail);
 						setCollaboratorWorkspace(userInfo.data.collaboratorWorkspace);
+						setUserId(userInfo.data.id);
 						localStorage.setItem('userEmail', userInfo.data.userEmail);
-						router.push(`/home/${userInfo.data.workspaceId}`);
+						router.push(`/home/${userInfo.data.id}/${userInfo.data.workspaceId}`);
 					} else {
 						router.push('/new_workspace');
 					}

@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 const http = require('http');
 var logger = require('morgan');
 require('dotenv').config();
-const SocketIo = require('socket.io')
+const { Server } = require("socket.io");
 const cors = require('cors');
 
 // const server = http.createServer(app);
@@ -41,6 +41,27 @@ var chatRouter = require('./routes/ChatRoute');
 var messageRouter = require('./routes/MessageRouter');
  
 var app = express();
+
+const ioMiddleware=(io)=>{
+  return (req,res,next)=>{
+    req.io=io
+    next();
+  };
+}
+
+const server = http.createServer(app);
+const io =new Server(server,{
+  cors:{
+    origin:"http://localhost:3000",
+    methods:["GET","POST"],
+  },
+});
+app.use(ioMiddleware(io));
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.emit('update')
+});
 
 
 
@@ -95,5 +116,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
+server.listen(8000,()=>{console.log('port connected');})
 module.exports = app;

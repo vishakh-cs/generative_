@@ -19,6 +19,7 @@ import useStore from "@/Stores/store";
 import axios from "axios";
 import { useState } from "react";
 import InviteCollab from "./InviteCollab/page";
+import { DeleteConformation } from "./DeleteConformation";
 
 interface SettingsSliderProps {
   workspaceId: string;
@@ -125,9 +126,9 @@ export function SettingsSlider({ workspaceId, workspaceName, workspaceLogoIndex,
           <div className="border-2 border-white border-opacity-65 cursor-pointer h-14 py-6 flex items-center rounded-md p-2 my-2">
             <InviteCollab workspaceId={workspaceId} workspaceType={workspaceType} />
           </div>
-          <div className="border-2 border-red-500 cursor-pointer border-opacity-65 h- py-6 flex items-center rounded-md p-2 my-2">
-            <span className="text-red-500 font-semibold">Delete My Workspace</span>
-          </div>
+
+          <DeleteConformation  workspaceId={workspaceId} workspaceName={workspaceName} />
+         
         </SheetHeader>
         <SheetFooter>
           <SheetClose asChild>

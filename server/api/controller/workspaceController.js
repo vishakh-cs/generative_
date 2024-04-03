@@ -21,7 +21,7 @@ const ProtectedRouteData = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const userData = {_id: user._id, name: user.username, email: user.email,profileImageUrl: user.profileImageUrl,};
+    const userData = { _id: user._id, name: user.username, email: user.email, profileImageUrl: user.profileImageUrl, };
 
     res.status(200).json(userData,);
   } catch (error) {
@@ -32,6 +32,7 @@ const ProtectedRouteData = async (req, res) => {
 
 const sidebarUser = async (req, res) => {
   try {
+
     const { workspaceId } = req.body;
     // console.log("workspaceId", workspaceId);
     const workspace = await Workspace.findById(workspaceId);
@@ -108,13 +109,13 @@ const sidebarUser = async (req, res) => {
 
 const bannerImageUpload = async (req, res) => {
   try {
-
+    
     const { workspaceId, imageUrl } = req.body;
-
+    
     const Page_id = req.body.pageId
-
+    
     console.log("req body", req.body);
-
+    
     console.log("ppageIdpageIdageId", Page_id);
 
     // Assuming you want to update the Page model
@@ -126,8 +127,8 @@ const bannerImageUpload = async (req, res) => {
 
     // Update the PageBannerImage field with the uploaded image URL
     page.PageBannarImage = imageUrl;
-
-    // Save the updated page
+    const io=req.io
+    io.emit("updateBanner",imageUrl);
     await page.save();
 
     res.status(200).json({ success: true, message: 'Image URL stored successfully' });
@@ -188,6 +189,7 @@ const fechUserData = async (req, res) => {
 
 const addPage = async (req, res) => {
   try {
+
     console.log('Received request body:', req.body);
 
     const { workspaceId, pageName, pageContent } = req.body;
@@ -210,6 +212,9 @@ const addPage = async (req, res) => {
 
     const savedPage = await newPage.save();
     workspace.pages.push(savedPage._id);
+
+    const io=req.io
+    io.emit("addpage");
 
     const updatedWorkspace = await workspace.save();
 
@@ -564,11 +569,16 @@ const getCollabUser = async (req, res) => {
 
     const collaboratorIds = workspace.collaborators;
 
-    console.log("collaboratorIds", collaboratorIds);
+    console.log("collaboratorId12345", collaboratorIds);
+
+    // Convert ObjectIds to strings
+    const collabworkspace_id = collaboratorIds.map(id => id.toString());
+
+    // const collabworkspace_id =
 
     const collaborators = await UserModel.find({ _id: { $in: collaboratorIds } });
 
-    return res.status(200).json({ success: true, collaborators });
+    return res.status(200).json({ success: true, collabworkspace_id, collaborators });
   } catch (error) {
     console.error('Error fetching collaborating users:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
@@ -661,6 +671,8 @@ const getOtherCollabUsers = async (req, res) => {
 
     const workspaces = await Workspace.find({ collaborators: userId });
 
+    const otherWorkspaceIds = workspaces.map(ws => ws._id.toString());
+
     // Fetch the owner data for each workspace in the workspaces array
     const owner = await Promise.all(workspaces.map(async (ws) => {
       const ownersData = await UserModel.findById(ws.owner);
@@ -670,7 +682,7 @@ const getOtherCollabUsers = async (req, res) => {
     console.log("workspaces", workspaces);
     console.log("ownersData", owner);
 
-    return res.status(200).json({ success: true, owner: owner[0] });
+    return res.status(200).json({ success: true, otherWorkspaceIds, owner: owner[0] });
   } catch (error) {
     console.error('Error fetching collaborating users:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
@@ -702,7 +714,83 @@ const leaveCollaboration = async (req, res) => {
   }
 };
 
+const deleteWorkspace = async (req, res) => {
 
+  console.log("hoo");
+  const { workspaceId } = req.body;
+  try {
+    const workspace = await Workspace.findOne({ _id: workspaceId });
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: 'Workspace not found' });
+    }
+
+    await PageSchema.deleteMany({ _id: { $in: workspace.pages } });
+    await Workspace.deleteOne({ _id: workspaceId });
+
+    return res.status(200).json({ success: true, message: 'Workspace and associated pages deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting workspace:', error);
+    return res.status(500).json({ success: false, message: 'Error deleting workspace' });
+  }
+};
+
+
+const getPublishData = async (req, res) => {
+  console.log("hfhfj");
+  try {
+    const workspaceId = req.query.workspaceid;
+
+    console.log("workspaceid",workspaceId);
+
+    if (!workspaceId) {
+      return res.status(400).json({ success: false, message: 'Workspace ID is required' });
+    }
+
+    const workspace = await Workspace.findById(workspaceId)
+
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: 'Workspace not found' });
+    }
+
+    // Optionally, you can select specific fields to include/exclude in the response
+    const { _id, name, pages, isPublished, createdAt } = workspace;
+
+    res.status(200).json({
+      success: true,
+      workspace: {
+        _id,
+        name,
+        pages,
+        isPublished,
+        createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching workspace data:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+const publish_unpublish_Document = async (req, res) => {
+  const { workspaceId, published } = req.body;
+
+  try {
+
+    const workspace = await Workspace.findById(workspaceId);
+
+    if (!workspace) {
+      return res.status(404).json({ message: 'Workspace not found' });
+    }
+    workspace.isPublished = published;
+    await workspace.save();
+
+    return res.status(200).json({ message: 'Workspace updated successfully' });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 module.exports = {
   ProtectedRouteData,
@@ -727,5 +815,7 @@ module.exports = {
   getProfileImage,
   getOtherCollabUsers,
   leaveCollaboration,
-
+  deleteWorkspace,
+  getPublishData,
+  publish_unpublish_Document,
 };

@@ -16,13 +16,26 @@ import Loaders from '../Loaders/page';
 import useStore from '@/Stores/store';
 import { useRouter } from 'next/navigation';
 
-export default function Room({ roomId, fallback}) {
-
+export default function Room({ roomId,userId, fallback}) {
+ 
   const router = useRouter();
 
   const userEmail = localStorage.getItem('userEmail');
 
-  console.log("roomId",roomId);
+  const otherWorkspaceId = useStore(state=>state.otherWorkspaceId);
+
+    console.log("otherWorkspaceId12  ",otherWorkspaceId);
+
+  // useEffect(() => {
+  //   const otherWorkspaceIds = sessionStorage.getItem('otherWorkspaceIds');
+  //   if (otherWorkspaceIds) {
+  //     setOtherWorkspaceId(otherWorkspaceIds);
+  //   }
+  // }, []);
+
+  const room_id = otherWorkspaceId ? otherWorkspaceId : roomId;
+
+  console.log("roomId",room_id);
 
   console.log("userEmail",userEmail);
   // TODO: get user input for room and name
@@ -36,7 +49,7 @@ export default function Room({ roomId, fallback}) {
     (async () => {
       try {
         const resp = await fetch(
-          `/api/get-participant-token?room=${roomId}&username=${name}`
+          `/api/get-participant-token?room=${room_id}&username=${name}`
         );
         const data = await resp.json();
         setToken(data.token);
@@ -53,7 +66,7 @@ export default function Room({ roomId, fallback}) {
     // Handle disconnection
     const handleDisconnect = () => {
       setToken("")
-      router.replace(`/home/${roomId}`);
+      router.back()
     };
 
   return (
@@ -67,13 +80,7 @@ export default function Room({ roomId, fallback}) {
       data-lk-theme="default"
       style={{ height: '100dvh' }}
     >
-      {/* Your custom component with basic video conferencing functionality. */}
-      <MyVideoConference />
-      {/* The RoomAudioRenderer takes care of room-wide audio for you. */}
-      <RoomAudioRenderer />
-      {/* Controls for the user to start/stop audio, video, and screen
-      share tracks and to leave the room. */}
-      <ControlBar />
+      <VideoConference/>
     </LiveKitRoom>
   );
 }

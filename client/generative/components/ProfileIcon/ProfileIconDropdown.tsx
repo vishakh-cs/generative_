@@ -7,12 +7,15 @@ import {
   FiShare,
   FiPlusSquare,
   FiMessageSquare,
+  FiUsers,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { PiPaperPlaneTilt } from "react-icons/pi";
 import Conversation from './Conversation';
 import axios from 'axios';
 import InputEmoji from 'react-input-emoji'
+import { useRouter } from 'next/navigation';
+import useStore from '@/Stores/store';
 
 interface User {
   _id: string;
@@ -32,10 +35,20 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   const [newMessage, setNewMessage] = useState("");
   const [chatId, setChatId] = useState(null);
   const [owner, setOwner] = useState<User | null>(null);
+  const [collabrationWorkspace, setCollabrationWorkspace] = useState<string[]>([]);
+  const [otherWorkspaceIds, setOtherWorkspaceIds] = useState<string[]>([]);
+
 
   const [messages, setMessages] = useState([]);
 
-  console.log("chats:", chats);
+  const setOtherWorkspaceId = useStore((state)=>state.setOtherWorkspaceId);
+ 
+
+  const router = useRouter();
+
+  console.log("otherWorkspaceIds",otherWorkspaceIds);
+
+  console.log("collabrationWorkspace:", collabrationWorkspace);
 
 
   const handleChange = (newMessage) => {
@@ -67,8 +80,8 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("user_data",user_data);
-        
+        console.log("user_data", user_data);
+
         const response = await fetch(`http://localhost:8000/chatUser/${user_data._id}`);
         if (response.ok) {
           const data = await response.json();
@@ -84,7 +97,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
 
     fetchData();
   }, [user_data]);
-  
+
 
   // fetch collabdata
 
@@ -98,7 +111,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
         });
 
         console.log("response.data.collaborators", response.data.collaborators);
-
+        setCollabrationWorkspace(response.data.collabworkspace_id)
         setCollaboratingUsers(response.data.collaborators);
       } catch (error: any) {
         console.error("Error fetching collaborating users:", error);
@@ -121,6 +134,10 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
         });
 
         setOwner(response.data.owner);
+        setOtherWorkspaceIds(response.data.otherWorkspaceIds);
+        setOtherWorkspaceId(response.data.otherWorkspaceIds[0]);
+        sessionStorage.setItem('otherWorkspaceIds', response.data.otherWorkspaceIds);
+
       } catch (error: any) {
         console.error("Error fetching collaborating users:", error);
       }
@@ -150,30 +167,37 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
 
   // Function to handle opening chat modal
   const handleChatClick = (collaborator: User) => {
-    
+
     setChatCollaborator(collaborator);
     setShowChatModal(true);
-    console.log("THe chart datat",chats);
-    
+    console.log("THe chart datat", chats);
+
     setChatId(chats[0]?._id);
   };
 
+  // const handleMeetingRoomClick = () => {
+  //   const destination = otherWorkspaceIds.length > 0 ? otherWorkspaceIds[0] : workspaceId;
+  //   router.push(`/home/${user_data._id}/${destination}/Rooms`);
+  // };
 
-
+  const handleMeetingRoomClick = () => {
+    // const destination = otherWorkspaceIds.length > 0 ? otherWorkspaceIds[0] : workspaceId;
+    const currentUserId = user_data._id;
+    const firstOtherWorkspaceId = otherWorkspaceIds.length > 0 ? otherWorkspaceIds[0] : null;
+    
+    router.push(`/home/${currentUserId}/${workspaceId}/Rooms`);
+  };
+  
+  
 
   return (
     <>
       <motion.div animate={open ? "open" : "closed"} className="relative" ref={dropdownRef}>
         <button onClick={() => setOpen((pv) => !pv)}>
-
-            
-        {!user_data.profileImageUrl && user_data.email && (
-                <div className='bg-green-600 w-7 h-7 mr-2 mt-2 rounded-full'>
-                    
-                   
-                </div>
-            )}
-
+          {!user_data.profileImageUrl && user_data.email && (
+            <div className='bg-green-600 w-7 h-7 mr-2 mt-2 rounded-full'>
+            </div>
+          )}
           {user_data.profileImageUrl && (
             <Image
               src={user_data.profileImageUrl}
@@ -213,7 +237,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
                     title={owner.email}
                   />
                   <span>{owner.email}</span>
-                  <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) =>{e.preventDefault(); handleChatClick(owner)}}>
+                  <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) => { e.preventDefault(); handleChatClick(owner) }}>
                     <span className='text-sm font-semibold'>chat</span>
                     <FiMessageSquare size={15} />
                   </button>
@@ -233,7 +257,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
                       title={collaborator.email}
                     />
                     <span>{collaborator.email}</span>
-                    <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) =>{e.preventDefault(); handleChatClick(collaborator)}}>
+                    <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) => { e.preventDefault(); handleChatClick(collaborator) }}>
                       <span className='text-sm font-semibold'>chating</span>
                       <FiMessageSquare size={15} />
                     </button>
@@ -243,12 +267,15 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
             </div>
           </li>
 
-
-
           {/* Render other options */}
           <Option setOpen={setOpen} Icon={FiPlusSquare} text="Add Collaborator" />
           <Option setOpen={setOpen} Icon={FiEdit} text="Edit History" />
-          <Option setOpen={setOpen} Icon={FiTrash} text="Logout" />
+          {(collaboratingUsers.length > 0 || otherWorkspaceIds.length > 0) && (
+          <button onClick={() => handleMeetingRoomClick()}>
+            <Option setOpen={setOpen} Icon={FiUsers} text="Meeting Room" />
+          </button>
+        )}
+          <Option setOpen={setOpen} Icon={FiShare} text="Logout" />
         </motion.ul>
       </motion.div>
 
@@ -278,7 +305,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
                 value={newMessage}
                 onChange={handleChange}
               />
-             
+
               <PiPaperPlaneTilt
                 onClick={handleSend}
                 size={20} color='black' />

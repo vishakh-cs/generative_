@@ -29,7 +29,7 @@ const loader = ({ src, width, quality }: { src: string; width?: number; quality?
 };
 
 
-const BannerImage: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
+const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -185,24 +185,9 @@ const BannerImage: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
   return (
     <div className="bg-gray-100 font-sans h-72">
       <div className="relative bg-cover bg-center h-72">{memoizedImage}</div>
-      <button
-        onClick={handleAddBannerClick}
-        className="font-medium opacity-45 text-sm p-2"
-      >
-        Add a Banner Image
-      </button>
-      <input
-        type="file"
-        name="banner"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
-        onChange={handleFileChange}
-      />
-      <button onClick={handleUpload}>Upload</button>
-      <Toaster />
+     
     </div>
   );
 };
 
-export default BannerImage;
+export default BannerImagePreview;

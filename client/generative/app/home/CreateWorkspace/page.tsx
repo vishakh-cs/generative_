@@ -9,6 +9,12 @@ import Loaders from '@/components/Loaders/page';
 import { useSearchParams } from 'next/navigation'
 
 function CreateWorkspace() {
+    const [user_id,setUserId]=useState(null);
+
+    useEffect(() => {
+        const userId = localStorage.getItem('userId');
+        setUserId(userId);
+    }, []);
 
     const inputRef = useRef<HTMLInputElement | null>(null);
     const router = useRouter();
@@ -55,7 +61,7 @@ function CreateWorkspace() {
                 console.log("Server response:", response.data);
     
                 const workspaceId = response.data.workspace.workspaceId;
-                router.replace(`/home/${workspaceId}`);
+                router.replace(`/home/${user_id}/${workspaceId}`);
     
                 setIsModalOpen(false);
             } catch (error) {

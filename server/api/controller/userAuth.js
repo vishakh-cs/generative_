@@ -215,7 +215,7 @@ const Login = async (req, res) => {
     };
     if (hasWorkspace) {
       const workspace = await Workspace.findOne({ owner: user._id });
-      responseData.redirectUrl = `/home/${workspace._id}`;
+      responseData.redirectUrl = `/home/${user._id}/${workspace._id}`;
     }
 
     return res.status(200).json(responseData);
@@ -317,6 +317,7 @@ const checkWorkspace = async (req, res) => {
        console.log("collaboratorWorkspace",collaboratorWorkspace);
 
       res.json({
+        id:user._id,
         userEmail:user.email,
         hasWorkspace: user.have_workspace,
         workspaceId: workspace ? workspace._id : null,

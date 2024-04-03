@@ -80,6 +80,7 @@ const TrashBar: React.FC<TrashBarProps> = ({ workspaceId }) => {
 
     deletePagePromise.then((res) => {
         if (res.data.success) {
+            toast.success("Page has been moved to Trash");
             setPageRestored(true);
             fetchTrashedPages();
         }

@@ -22,6 +22,8 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import { CiTrash } from "react-icons/ci";
 import dynamic from 'next/dynamic';
 import { FaArrowLeftLong } from "react-icons/fa6";
+import { io, Socket } from 'socket.io-client';
+
 
 const DynamicTrashBar = dynamic(() => import('./TrashBar/page'), { ssr: false });
 
@@ -49,7 +51,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [workspaceid, setWorkspaceId] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const [trigger, setTrigger] = useState(false)
 
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
   const workspaceName = useStore((state) => state.workspaceName);
@@ -60,10 +62,12 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
   console.log("collabWorkspaces,collaboratorWorkspaceLogo", collabWorkspaces);
 
-  console.log("pages", pages);
+  console.log("userData", userData);
   console.log("Page_id", Page_id);
 
   console.log("workspaces", workspaces);
+
+  const socket = io('http://localhost:8000');
 
   const router = useRouter();
 
@@ -120,9 +124,13 @@ export default function Sidebar({ children, params }: SidebarProps) {
     fetchData();
   }, [params.workspaceId, isPageRestored, isWorkspaceNameChanged, isProfileChange]);
 
+  const userId = userData ? userData.id : null;
+  localStorage.setItem('userId', userId);
+
 
   const createWorkspace = async (e) => {
     e.preventDefault();
+   
     try {
       router.push(`/home/CreateWorkspace?email=${userData.email}`);
     } catch (error: any) {
@@ -137,7 +145,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const handleProfileClick = (pageId: string, workspaceId: string) => {
     console.log("pageIdpageId", pageId)
     if (Page_id) {
-      router.replace(`/home/${workspaceId}/${pageId}`);
+      router.replace(`/home/${userData.id}/${workspaceId}/${pageId}`);
       setSelectedPage(pageId);
     } else {
       console.error('Invalid pageId:', pageId);
@@ -158,10 +166,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
     if (collabWorkspace && collabWorkspace.id === workspaceId) {
       // Handle collaboration workspace click
       if (collabWorkspace.pages && collabWorkspace.pages.length > 0) {
-        router.replace(`/home/${workspaceId}/${collabWorkspace.pages[0]._id}`);
+        router.replace(`/home/${userData.id}/${workspaceId}/${collabWorkspace.pages[0]._id}`);
         setSelectedPage(collabWorkspace.pages[0]._id);
       } else {
-        router.replace(`/home/${workspaceId}`);
+        router.replace(`/home/${userData.id}/${workspaceId}`);
         setSelectedPage(null);
       }
     } else {
@@ -173,10 +181,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
       }
   
       if (workspace.pageIds.length > 0) {
-        router.replace(`/home/${workspaceId}/${workspace.pageIds[0]}`);
+        router.replace(`/home/${userData.id}/${workspaceId}/${workspace.pageIds[0]}`);
         setSelectedPage(workspace.pageIds[0]);
       } else {
-        router.replace(`/home/${workspaceId}`);
+        router.replace(`/home/${userData.id}/${workspaceId}`);
         setSelectedPage(null);
       }
     }
@@ -185,7 +193,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
   // page click
   const handleCollabClick = (pageId: string) => {
     if (Page_id) {
-      router.replace(`/home/${params.workspaceid}/${pageId}`);
+      router.replace(`/home/${userData.id}/${params.workspaceid}/${pageId}`);
       setSelectedPage(pageId);
     } else {
       console.error('Invalid pageId:', pageId);
@@ -237,7 +245,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
         // Check if the trashed page was the last one
         if (pages.length === 1) {
-          router.replace(`/home/${params.workspaceid}`);
+          router.replace(`/home/${userData.id}/${params.workspaceid}`);
           setSelectedPage(null);
           return;
         }
@@ -248,16 +256,16 @@ export default function Sidebar({ children, params }: SidebarProps) {
           const nextIndex = currentIndex + 1;
           const prevIndex = currentIndex - 1;
           if (nextIndex < pages.length) {
-            router.replace(`/home/${params.workspaceid}/${Page_id[nextIndex]}`);
+            router.replace(`/home/${userData.id}/${params.workspaceid}/${Page_id[nextIndex]}`);
             setSelectedPage(Page_id[nextIndex]);
           } else if (prevIndex >= 0) {
-            router.replace(`/home/${params.workspaceid}/${Page_id[prevIndex]}`);
+            router.replace(`/home/${userData.id}/${params.workspaceid}/${Page_id[prevIndex]}`);
             setSelectedPage(Page_id[prevIndex]);
           }
         }
       } else {
         // Handle the case where pages array is empty
-        router.replace(`/home/${params.workspaceid}`);
+        router.replace(`/home/${userData.id}/${params.workspaceid}`);
         setSelectedPage(null);
       }
     } catch (error) {
@@ -265,6 +273,23 @@ export default function Sidebar({ children, params }: SidebarProps) {
       toast.error('Failed to move page to trash.');
     }
   };
+
+
+  useEffect(() => {
+    socket.on('addpage', () => {
+      fetchData();
+    });
+  
+    socket.on('disconnect', () => {
+      console.log('Disconnected from the server');
+    });
+  
+    return () => {
+      socket.off('addpage');
+      socket.off('disconnect');
+    };
+  }, []);
+  
 
   const expandedSidebarClass = 'w-32';
   const collapsedSidebarClass = 'w-0';
@@ -353,7 +378,6 @@ export default function Sidebar({ children, params }: SidebarProps) {
                   onClick={() => handleWorkspaceClick(workspace.id)}
                   className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
                 >
-                  {/* Workspace logo */}
                   {workspace.logo && (
                     <Image
                       src={imgPaths[workspace.logo]}

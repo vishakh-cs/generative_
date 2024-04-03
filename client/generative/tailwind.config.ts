@@ -19,6 +19,7 @@ const config = {
     },
     extend: {
       colors: {
+        custom1color:"#09090B",
         workspaceColor: "#2E303A",
         sidebar:"#1B1C1E",
         border: "hsl(var(--border))",

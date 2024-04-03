@@ -9,6 +9,7 @@ interface StoreState {
   isProfileClicked: boolean;
   workspaceId: string;
   workspaceType: string; 
+  otherWorkspaceId: string;
   collaboratorWorkspace: {
     _id: string;
     name: string;
@@ -29,6 +30,7 @@ interface StoreActions {
   setUserData(user_data: any): void;
   setLogoutClicked: (value: boolean) => void;
   resetLogoutClicked: () => void;
+  setOtherWorkspaceId: (workspaceId: string) => void;
   setWorkspaceName: (name: string) => void;
   resetWorkspaceName: () => void;
   setWorkspaceId: (id: string) => void;
@@ -46,6 +48,7 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   isLogoutClicked: false,
   workspaceName: '',
   isProfileClicked: false,
+  otherWorkspaceId: '',
   workspaceId: '',
   workspaceType:'',
   collaboratorWorkspace: null,
@@ -62,6 +65,7 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   setWorkspaceName: (name) => set({ workspaceName: name }),
   resetWorkspaceName: () => set({ workspaceName: '' }),
 
+  setOtherWorkspaceId : (id) => set({ otherWorkspaceId: id }),
   setWorkspaceId: (id) => set({ workspaceId: id }),
   setWorkspaceType: (type) => set({ workspaceType: type }),
   setCollaboratorWorkspace: (collabWorkspace) => set({ collaboratorWorkspace: collabWorkspace }),

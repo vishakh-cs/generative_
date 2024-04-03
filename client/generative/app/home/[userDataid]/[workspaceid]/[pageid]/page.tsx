@@ -34,7 +34,7 @@ export default function workspaceid({ params }) {
               <div className='flex items-center gap-4 mr-4'> 
                 
                 <ProfileIcon workspaceId={params.workspaceid} pageId={params.pageid} />
-                <Publish />
+                <Publish workspaceid={params.workspaceid} pageId={params.pageid}/>
               </div>
             </div>
             <BannerImage workspaceId={params.workspaceid} pageId={params.pageid} />

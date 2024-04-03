@@ -68,6 +68,11 @@ router.get('/get_otherCollab_users',workspaceController.getOtherCollabUsers);
 
 router.post('/leave_collaboration' ,workspaceController.leaveCollaboration );
 
+router.post('/delete_workspace',workspaceController.deleteWorkspace);
+
+router.get('/get_publish_data',workspaceController.getPublishData);
+
+router.post('/publish_unpublish/:workspaceid',workspaceController.publish_unpublish_Document)
 
 
 
