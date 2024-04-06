@@ -6,6 +6,8 @@ const multer = require('multer');
 
 const router = express.Router();
 
+const validateTokenMiddleware = require('../Middleware/ValidateToken');
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const uploadDir = 'public/uploads';
@@ -72,9 +74,9 @@ router.post('/delete_workspace',workspaceController.deleteWorkspace);
 
 router.get('/get_publish_data',workspaceController.getPublishData);
 
-router.post('/publish_unpublish/:workspaceid',workspaceController.publish_unpublish_Document)
+router.post('/publish_document',workspaceController.publishDocument);
 
-
+router.post('/unpublish_document',workspaceController.unpublishDocument);
 
 
 module.exports = router;

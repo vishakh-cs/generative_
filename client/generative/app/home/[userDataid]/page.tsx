@@ -13,13 +13,38 @@ import { useRouter } from 'next/navigation';
 import Loaders from '@/components/Loaders/page';
 
 
-export default function workspaceid({ params }) {
-
+export default function userDataid({ params }) {
+  const router= useRouter()
   const isLogoutClicked = useStore((state) => state.isLogoutClicked);
   const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
   const userEmail = localStorage.getItem('userEmail');
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
 
+  console.log("userEmailuserEmailuserEmail",userEmail);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/protected_workspace/${params.workspaceid}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.email);
+          if (data.email !== userEmail){
+            router.push('/404')
+          }
+        } else {
+          throw new Error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false); 
+      }
+    };
+  
+    fetchUserData();
+  }, [params.workspaceid , userEmail, router]);
  
 
   if (loading) {

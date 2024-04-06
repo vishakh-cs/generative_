@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { destroyCookie, parseCookies } from 'nookies';
 import { signOut } from 'next-auth/react';
+import useStore from '@/Stores/store';
 
 
 export default function Navbar() {
@@ -13,6 +14,9 @@ export default function Navbar() {
   const isLoggedIn = !!cookies.token;
 
   const [loading, setLoading] = useState(true);
+
+  
+  const darkMode = useStore(state => state.darkMode);
 
   useEffect(() => {
     setLoading(false);
@@ -32,14 +36,14 @@ export default function Navbar() {
   if (loading) {
     return null;
   }
-
+  
   return (
-    <header className="p-2 dark:bg-opacity-40 dark:bg-gray-700 dark:text-gray-100 fixed w-full top-0 z-50" style={{ backdropFilter: 'blur(20px)' }}>
+    <header className="p-2 dark:bg-opacity-40 bg-gray-700/45 dark:bg-gray-700 text-gray-100 dark:text-gray-100 fixed w-full top-0 z-50" style={{ backdropFilter: 'blur(20px)' }}>
       <div className="container flex justify-between h-16 mx-auto">
         <button onClick={()=>router.push('/')} rel="noopener noreferrer"  aria-label="Back to homepage" className="flex items-center p-2 transition duration-300 ease-in-out transform hover:scale-105">
           <Image className='h-full object-contain w-32'
-            src="/Assets/White logo - no background.png"
-            alt=""
+             src={darkMode ? "/Assets/White logo - no background.png" :'/Assets/Black logo - no background.png'}
+            alt="generative"
             width={200}
             height={500}
           />

@@ -29,6 +29,8 @@ const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollab
 
     const WorkspaceType = useStore((state) => state.workspaceType);
 
+    const setRemoveCollab_trigger = useStore((state)=>state.setRemoveCollabTrigger)
+
     console.log("collaboratingUsers", collaboratingUsers);
 
     useEffect(() => {

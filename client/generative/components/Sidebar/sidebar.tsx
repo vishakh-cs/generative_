@@ -15,7 +15,6 @@ import ProfileSlider from './ProfileSlider/page';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineSettingsSuggest } from "react-icons/md";
-import Settings from './Settings';
 import './sidebar.css';
 import { SettingsSlider } from './SettingsSlider/page';
 import { FaRegTrashAlt } from "react-icons/fa";
@@ -23,6 +22,7 @@ import { CiTrash } from "react-icons/ci";
 import dynamic from 'next/dynamic';
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { io, Socket } from 'socket.io-client';
+import { Spinner } from '../Loaders/Spinner';
 
 
 const DynamicTrashBar = dynamic(() => import('./TrashBar/page'), { ssr: false });
@@ -34,6 +34,12 @@ interface SidebarContextProps {
 interface SidebarProps {
   children: ReactNode;
   params: any;
+}
+
+interface Workspace {
+  pageIds: any;
+  id: string;
+  
 }
 
 const SidebarContext = createContext<SidebarContextProps | undefined>(undefined);
@@ -51,7 +57,6 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [workspaceid, setWorkspaceId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [trigger, setTrigger] = useState(false)
 
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
   const workspaceName = useStore((state) => state.workspaceName);
@@ -61,9 +66,6 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [isProfileChange, setIsProfileChange] = useState(false);
 
   console.log("collabWorkspaces,collaboratorWorkspaceLogo", collabWorkspaces);
-
-  console.log("userData", userData);
-  console.log("Page_id", Page_id);
 
   console.log("workspaces", workspaces);
 
@@ -91,7 +93,6 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
   // fetch user and workspace data
   const fetchData = async () => {
-    setLoading(true);
     try {
       if (!params.workspaceid) {
         return;
@@ -103,7 +104,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
       const { data, workspaces, pages: pageIds, pageNames, pageId, collaboratorWorkspace: collabWs } = response.data;
       console.log("workspaces1234567", workspaces)
-      const workspacePageIds = workspaces.map(workspace => workspace.pageIds).flat(); // Extract all page IDs and flatten the array
+      const workspacePageIds = workspaces.map((workspace: Workspace) => workspace.pageIds).flat(); // Extract all page IDs and flatten the array
       setPage_id(workspacePageIds);
       setPages(pageNames)
       setWorkspaceId(params.workspaceid)
@@ -145,7 +146,9 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const handleProfileClick = (pageId: string, workspaceId: string) => {
     console.log("pageIdpageId", pageId)
     if (Page_id) {
+      setLoading(true);
       router.replace(`/home/${userData.id}/${workspaceId}/${pageId}`);
+      setLoading(false)
       setSelectedPage(pageId);
     } else {
       console.error('Invalid pageId:', pageId);
@@ -289,6 +292,41 @@ export default function Sidebar({ children, params }: SidebarProps) {
       socket.off('disconnect');
     };
   }, []);
+
+
+  useEffect(() => {
+    socket.on('collabRemoved', () => {
+      fetchData();
+      toast.success('You have been removed from the workspace.');
+    });
+  
+    socket.on('disconnect', () => {
+      console.log('Disconnected from the server');
+    });
+  
+    return () => {
+      socket.off('collabRemoved');
+      socket.off('disconnect');
+    
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.on('CollabEmailSuccess', () => {
+      fetchData();
+      toast.success('You have been Added to an Workspace.');
+    });
+  
+    socket.on('disconnect', () => {
+      console.log('Disconnected from the server');
+    });
+  
+    return () => {
+      socket.off('collabRemoved');
+      socket.off('disconnect');
+    
+    };
+  }, []);
   
 
   const expandedSidebarClass = 'w-32';
@@ -321,6 +359,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
       toast.error('Failed to leave collaboration.');
     }
   };
+
+  if(loading){
+    return <Spinner />
+  }
 
   const imgPaths = [
     "/Assets/workspace1.jpg",
@@ -453,7 +495,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
                         )}
                         <button
                           className="font-sans"
-                          onClick={() => handleWorkspaceClick(collabWorkspaces.id)}
+                          // onClick={() => handleWorkspaceClick(collabWorkspaces.id)}
                         >
                           {collabWorkspaces.name}
                         </button>
@@ -474,7 +516,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
                             {collabPage.PageName}
                           </span>
                           {/* Include trash functionality for pages */}
-                          <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(collabPage.PageName)} />
+                          {/* <FaRegTrashAlt size={20} className="opacity-60 ml-auto" onClick={() => moveToTrash(collabPage.PageName)} /> */}
                         </button>
                       ))}
 

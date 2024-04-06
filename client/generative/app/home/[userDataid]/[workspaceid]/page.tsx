@@ -24,7 +24,7 @@ export default function workspaceid({ params }) {
   const userEmail = localStorage.getItem('userEmail');
   const [loading, setLoading] = useState(true);
 
-  console.log("userData",userData);
+  console.log("userEmailuserEmailuserEmail",userEmail);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -62,7 +62,7 @@ export default function workspaceid({ params }) {
 
   return (
     <ProtectedRoutes UserEmail={userData}>
-      <div className='bg-workspaceColor min-h-screen'>
+      <div className='dark:bg-workspaceColor min-h-screen'>
         {isLogoutClicked ? (
           <LogoutModal onClose={() => resetLogoutClicked()} />
         ) : (

@@ -21,7 +21,7 @@ const Login: React.FC<LoginProps> = () => {
 	const [collabWorkspace, setCollabWorkspace] = useState<any>(null);
 	const [userId,setUserId]=useState<string | null>(null);
 	const setCollaboratorWorkspace = useStore((state) => state.setCollaboratorWorkspace);
-
+    const [loading,setLoading] = useState(false)
 	const collaboratorWorkspace = useStore((state) => state.collaboratorWorkspace);
 
 	const setUserEmail = useStore((state) => state.setUserEmail);
@@ -33,11 +33,13 @@ const Login: React.FC<LoginProps> = () => {
 
 
 	useEffect(() => {
+		setLoading(true)
 		if (status === 'authenticated' && !WorkspaceId) {
 			router.push('/new_workspace');
 		} else if (status === 'authenticated' && WorkspaceId) {
 			router.push(`/home/${userId}/${WorkspaceId}`);
 		}
+		setLoading(false)
 	}, [status, WorkspaceId, router]);
 
 
@@ -142,7 +144,7 @@ const Login: React.FC<LoginProps> = () => {
 		}
 	};
 
-	if (isLoggedIn ||status === "loading") {
+	if (isLoggedIn ||status === "loading" ||loading) {
 		return <Loaders />;
 	}
 

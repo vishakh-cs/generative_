@@ -113,19 +113,13 @@ const bannerImageUpload = async (req, res) => {
     const { workspaceId, imageUrl } = req.body;
     
     const Page_id = req.body.pageId
-    
-    console.log("req body", req.body);
-    
-    console.log("ppageIdpageIdageId", Page_id);
 
-    // Assuming you want to update the Page model
     const page = await PageSchema.findById(Page_id);
 
     if (!page) {
       return res.status(404).json({ success: false, message: 'Page not found' });
     }
 
-    // Update the PageBannerImage field with the uploaded image URL
     page.PageBannarImage = imageUrl;
     const io=req.io
     io.emit("updateBanner",imageUrl);
@@ -407,6 +401,9 @@ const addCollabUser = async (req, res) => {
     }
     workspace.collaborators.push(user._id);
 
+    const io=req.io
+    io.emit("CollabEmailSuccess");
+
     await workspace.save();
 
     res.send(`
@@ -600,6 +597,9 @@ const removeCollaborator = async (req, res) => {
       return res.status(404).json({ error: 'Workspace not found or user not found in collaborators' });
     }
 
+    const io=req.io
+    io.emit("collabRemoved");
+
     res.json({ success: true, message: 'User removed from collaboration successfully' });
   } catch (error) {
     console.error('Error removing user from collaboration:', error);
@@ -736,11 +736,8 @@ const deleteWorkspace = async (req, res) => {
 
 
 const getPublishData = async (req, res) => {
-  console.log("hfhfj");
   try {
     const workspaceId = req.query.workspaceid;
-
-    console.log("workspaceid",workspaceId);
 
     if (!workspaceId) {
       return res.status(400).json({ success: false, message: 'Workspace ID is required' });
@@ -752,15 +749,25 @@ const getPublishData = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Workspace not found' });
     }
 
-    // Optionally, you can select specific fields to include/exclude in the response
-    const { _id, name, pages, isPublished, createdAt } = workspace;
+    const pages = await PageSchema.find({ _id: { $in: workspace.pages }, Trashed: false });
+
+    const pageCount = pages.length;
+ 
+    const { _id, name, isPublished, createdAt } = workspace;
 
     res.status(200).json({
       success: true,
       workspace: {
         _id,
         name,
-        pages,
+        pages: pages.map(page => ({
+          _id: page._id,
+          PageName: page.PageName,
+          PageBannarImage: page.PageBannarImage,
+          Trashed: page.Trashed,
+          content: page.content,
+        })),
+        pageCount,
         isPublished,
         createdAt,
       },
@@ -772,25 +779,42 @@ const getPublishData = async (req, res) => {
 };
 
 
-const publish_unpublish_Document = async (req, res) => {
-  const { workspaceId, published } = req.body;
-
+const publishDocument = async (req, res) => {
+  const { workspaceId } = req.body;
   try {
-
     const workspace = await Workspace.findById(workspaceId);
 
     if (!workspace) {
       return res.status(404).json({ message: 'Workspace not found' });
     }
-    workspace.isPublished = published;
+    workspace.isPublished = true;
     await workspace.save();
-
-    return res.status(200).json({ message: 'Workspace updated successfully' });
+    return res.status(200).json({ message: 'Workspace published successfully' });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+const unpublishDocument = async (req, res) => {
+  const { workspaceId } = req.body;
+  try {
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ message: 'Workspace not found' });
+    }
+    workspace.isPublished = false;
+    const io=req.io
+    io.emit("unpublished");
+    await workspace.save();
+
+    return res.status(200).json({ message: 'Workspace unpublished successfully' });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 module.exports = {
   ProtectedRouteData,
@@ -817,5 +841,6 @@ module.exports = {
   leaveCollaboration,
   deleteWorkspace,
   getPublishData,
-  publish_unpublish_Document,
+  publishDocument,
+  unpublishDocument,
 };

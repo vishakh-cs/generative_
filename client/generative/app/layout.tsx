@@ -7,6 +7,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { NextAuthProvider } from './provider';
 import { EdgeStoreProvider } from '@/lib/edgestore';
+import useStore from '@/Stores/store';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,30 +17,37 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [darkMode, setDarkMode] = useState(false);
+
+  const setDarkMode = useStore((state)=>state.setDarkMode)
+
+  const darkMode = useStore(state => state.darkMode);
+ 
+ 
 
   useEffect(() => {
-    // Check user's dark mode preference from localStorage or other sources
-    const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const storedDarkMode = localStorage.getItem('darkMode') === 'true';
-
-    // Set dark mode based on user preference or stored preference
-    setDarkMode(userPrefersDark || storedDarkMode);
+    const savedDarkMode = localStorage.getItem('darkmode');
+    if (savedDarkMode) {
+      setDarkMode(JSON.parse(savedDarkMode)); 
+    }
   }, []);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    localStorage.setItem('darkMode', (!darkMode).toString());
-  };
 
   const pathname = usePathname();
   const showNavbar = pathname === '/';
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   return (
     <html lang="en">
-      <body className={`${inter.className} ${darkMode ? 'dark' : ''}`}>
+      <body className={`${inter.className} `}>
       <NextAuthProvider>
       <EdgeStoreProvider>
-          {showNavbar && <Navbar toggleDarkMode={toggleDarkMode} darkMode={darkMode} />}
+          {showNavbar && <Navbar  darkMode={darkMode} />}
           {children}
           </EdgeStoreProvider>
         </NextAuthProvider>

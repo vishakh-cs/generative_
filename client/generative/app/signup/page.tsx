@@ -87,7 +87,7 @@ export default function Signup() {
                 console.error('Signup failed:', response.data.message);
                 setMessage(`Signup failed: ${response.data.message}`);
             }
-        } catch (error) {
+        } catch (error :any) {
             console.error('Signup failed:', error.message);
 
             if (error.response) {

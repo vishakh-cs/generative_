@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { MdContentCopy } from "react-icons/md";
 import { Check } from "lucide-react";
+import toast, { ToastBar, Toaster } from 'react-hot-toast';
 
 function Publish({ workspaceid ,pageId}) {
   const baseUrl = 'http://localhost:3000';
@@ -42,9 +43,9 @@ function Publish({ workspaceid ,pageId}) {
   };
 
   const sendPublishRequest = () => {
-    // Send a POST request to publish the document
-    axios.post('http://localhost:8000/publish_unpublish', {workspaceId: workspaceid, published: true})
+    axios.post('http://localhost:8000/publish_document', {workspaceId: workspaceid, })
     .then(response => {
+      toast.success("Page Published Successfully!");
       console.log('Publish request successful');
     })
     .catch(error => {
@@ -53,8 +54,9 @@ function Publish({ workspaceid ,pageId}) {
   };
 
   const sendUnpublishRequest = () => {
-    axios.post('http://localhost:8000/publish_unpublish', {workspaceId: workspaceid, unpublished: true})
+    axios.post('http://localhost:8000/unpublish_document', {workspaceId: workspaceid,})
     .then(response => {
+      toast.success("Page Unpublished Successfully!");
       console.log('Unpublish request successful');
     })
     .catch(error => {
@@ -73,22 +75,22 @@ function Publish({ workspaceid ,pageId}) {
   }
 
   return (
-    <div className={`font-sans font-semibold cursor-pointer ${isPublished ? "text-green-600" : "text-gray-800"} ${isPublished ? "dark:text-green-400" : "dark:text-gray-400"}`} onClick={isPublished ? undefined : openModal}>
+    <div className={`font-sans font-semibold cursor-pointer ${isPublished ? "text-green-600" : "dark:text-slate-100 text-gray-950"} ${isPublished ? "text-green-400" : "text-gray-400"}`} onClick={isPublished ? undefined : openModal}>
       {isPublished ? "Published" : "Publish"} 🌐
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center mt-4">
-          <div className="fixed inset-0 bg-gray-800 bg-opacity-75" onClick={closeModal}></div>
+          <div className="fixed inset-0 dark:bg-gray-800/50 bg-opacity-85 bg-gray-200" onClick={closeModal}></div>
           <div className="absolute right-0 top-0 m-8">
-            <div className={`rounded-lg ${isPublished ? "bg-workspaceColor" : "bg-workspaceColor"} p-8 shadow-2xl`}>
-              <h2 className={`text-lg font-bold ${isPublished ? "dark:text-white" : "dark:text-gray-200"}`}>{isPublished ? "Published 🌐" : "🌎 Are you sure you want to publish?"}</h2>
-              <p className={`mt-2 text-sm ${isPublished ? "text-green-800" : "text-gray-900"} ${isPublished ? "dark:text-white" : "dark:text-blue-200"}`}>
+            <div className={`rounded-lg ${isPublished ? "dark:bg-workspaceColor" : "bg-workspaceColor"} p-8 shadow-2xl`}>
+              <h2 className={`text-lg font-bold ${isPublished ? "text-white" : "text-gray-200"}`}>{isPublished ? "Published 🌐" : "🌎 Are you sure you want to publish?"}</h2>
+              <p className={`mt-2 text-sm ${isPublished ? "text-green-800" : "text-gray-100"} ${isPublished ? "dark:text-white" : "text-blue-200"}`}>
                 {isPublished ? "Anyone who has this link will be able to view this." : "Once published, your changes will be visible to everyone. Are you sure you want to proceed?"}
               </p>
               {isPublished ? (
                 <div>
                   <div className="mt-4 flex items-center gap-2 ">
                     <input
-                      className="flex-1 text-gray-200 px-2 text-xs border rounded-l-md h-10 bg-muted truncate"
+                      className="flex-1 text-gray-950 dark:text-gray-200 px-2 text-xs border rounded-l-md h-10 bg-muted truncate"
                       value={url}
                       disabled
                     />
@@ -98,9 +100,9 @@ function Publish({ workspaceid ,pageId}) {
                       className="h-8 rounded-l-none"
                     >
                       {copied ? (
-                        <Check className="h-4 w-4" />
+                        <Check className="h-4 w-4 text-gray-950 dark:text-white" />
                       ) : (
-                        <MdContentCopy color='white' size={18} className="h-4 w-4" />
+                        <MdContentCopy  size={18} className="h-4 w-4 text-gray-950 dark:text-white" />
                       )}
                     </button>
                   </div>
@@ -121,11 +123,14 @@ function Publish({ workspaceid ,pageId}) {
                   <button type="button" className={`rounded ${isPublished ? "bg-green-200" : "bg-gray-50"} px-4 py-2 text-sm font-medium ${isPublished ? "text-green-600" : "text-gray-600"}`} onClick={(e) => { e.stopPropagation(); closeModal(); }}>
                     No, Go Back
                   </button>
+                  <Toaster/>
                 </div>
+                
               )}
             </div>
           </div>
         </div>
+  
       )}
     </div>
   );

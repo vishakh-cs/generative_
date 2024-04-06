@@ -43,6 +43,8 @@ const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId })
   const [trigger, setTrigger] = useState(false)
   const store = useStore();
 
+  console.log("pageId",pageId);
+
   useEffect(() => {
     const newSocket = io('http://localhost:8000');
     setSocket(newSocket);

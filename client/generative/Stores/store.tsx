@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 interface StoreState {
+  userID: string | null;
   userEmail: string;
   profileImage: string | null;
   user_data: any; 
@@ -22,11 +23,14 @@ interface StoreState {
   } | null;
   isPageRestored: boolean; 
   isWorkspaceNameChanged: boolean; 
+  removeCollabTrigger:boolean;
+  darkMode: boolean;
 }
 
 interface StoreActions {
-  setUserEmail(userEmail: string): void;
-  profileImage(profileImage?: string): void;
+  setUserID(userID: string): void;
+  setUserEmail(userEmail: string):  void;
+  setProfileImage:(profileImage?: string)=>void;
   setUserData(user_data: any): void;
   setLogoutClicked: (value: boolean) => void;
   resetLogoutClicked: () => void;
@@ -38,12 +42,15 @@ interface StoreActions {
   setCollaboratorWorkspace: (collabWorkspace: StoreState['collaboratorWorkspace']) => void;
   setPageRestored(restored: boolean): void;
   setWorkspaceNameChange(changed: boolean): void;
+  setRemoveCollabTrigger(trigger: boolean): void;
+  setDarkMode: (darkMode: boolean) => void;
 
 }
 
 export const useStore = create<StoreState & StoreActions>((set) => ({
+  userID: localStorage.getItem('USER_ID') || null, 
   userEmail: '',
-  profileImage: '',
+  profileImage:'',
   user_data: {},
   isLogoutClicked: false,
   workspaceName: '',
@@ -54,7 +61,10 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   collaboratorWorkspace: null,
   isPageRestored: false,
   isWorkspaceNameChanged: false,
-
+  removeCollabTrigger: false,
+  darkMode: JSON.parse(localStorage.getItem('darkmode') as string),
+ 
+  setUserID: (userId) => set({ userID: userId }),
   setUserEmail: (email) => set({ userEmail:  email.toLowerCase() }),
   setProfileImage:(img)=> set({ profileImage: img}),
   setUserData: (data) => set({ user_data: data }),
@@ -72,6 +82,8 @@ export const useStore = create<StoreState & StoreActions>((set) => ({
   setPageRestored: (restored) => set({ isPageRestored: restored }),
 
   setWorkspaceNameChange: (changed) => set({isWorkspaceNameChanged: changed}),
+  setRemoveCollabTrigger: (trigger) => set({removeCollabTrigger: trigger}),
+  setDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
 }));
 
 export default useStore;

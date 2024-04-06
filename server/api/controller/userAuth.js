@@ -207,6 +207,7 @@ const Login = async (req, res) => {
       success: true,
       message: 'Login successful.',
       user: {
+        userid: user._id,
         username: user.username,
         email: user.email,
         hasWorkspace,
@@ -403,6 +404,7 @@ const createNewWorkSpace = async (req, res) => {
         createdAt: newWorkspace.createdAt,
         workspaceId: newWorkspace._id,
       },
+      userId: user._id,
     });
   } catch (error) {
     console.error('Error creating workspace:', error.message);

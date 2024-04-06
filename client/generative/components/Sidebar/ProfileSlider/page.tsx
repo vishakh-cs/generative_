@@ -34,10 +34,33 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
   const [newUsername, setNewUsername] = useState(avatarData?.username);
   const { status, data: session } = useSession();
   const [avatarDataState, setAvatarDataState] = useState(avatarData);
+  const [isLoadingLocalStorage, setIsLoadingLocalStorage] = useState(true);
+
+  const setDarkMode = useStore((state)=>state.setDarkMode)
+
+  const darkMode = useStore(state => state.darkMode);
+
+  const setProfileImage = useStore((state)=>state.setProfileImage);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const { edgestore } = useEdgeStore();
 
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('darkmode');
+    if (savedDarkMode) {
+      setDarkMode(savedDarkMode);
+      setIsLoadingLocalStorage(false);
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkModeState = !darkMode;
+    setDarkMode(newDarkModeState);
+    localStorage.setItem('darkmode', JSON.stringify(newDarkModeState));
+  };
+ 
+  console.log("darkmode",darkMode);
+  
   useEffect(() => {
 
     fetchProfileImage();
@@ -108,10 +131,6 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
   };
 
 
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-  };
-
   const handleDeleteAllWorkspaces = () => {
     console.log('Deleting all workspaces...');
   };
@@ -133,6 +152,7 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
          setSuccess(true);
          setIsProfileChange(true);
          setIsEditingUsername(false);
+         setProfileImage(prev => !prev);
          setAvatarDataState(prevData => ({ ...prevData, username: newUsername }));
          toast.success('Username changed successfully');
          setTimeout(() => {
@@ -153,7 +173,6 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
     <Sheet>
       <SheetTrigger className='w-12'>
         <Avatar>
-          {/* <AvatarImage src={avatarImage } className="rounded-full"/> */}
           <AvatarFallback
             className={twMerge(`
             rounded-full
@@ -180,7 +199,7 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
           </AvatarFallback>
         </Avatar>
       </SheetTrigger>
-      <SheetContent className='bg-gray-950'>
+      <SheetContent className='dark:bg-gray-950'>
         <SheetHeader>
           <h4 className={twMerge('font-semibold')}>Profile</h4>
 
@@ -248,7 +267,7 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
 
             <div className={twMerge('box-item')}>
               <div className={twMerge('flex items-center mt-4 border-gray-200 rounded-lg h-16 w-full border')}>
-                <span className={twMerge('text-gray-500 dark:text-gray-400 overflow-hidden whitespace-nowrap')}>
+                <span className={twMerge('text-gray-500 dark:text-gray-400 overflow-hidden whitespace-nowrap ml-1')}>
                 {avatarDataState?.username.length > 15 ? (
                     <span title={avatarDataState?.username}>
                       {avatarDataState?.username?.slice(0, 15)}...
@@ -259,27 +278,31 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
                 </span>
 
                 {isEditingUsername ? (
-                  <>
-                    <input
-                      type="text"
-                      value={newUsername}
-                      onChange={(e) => setNewUsername(e.target.value)}
-                      aria-label="New Username"
-                      className={twMerge('border-b border-gray-500 dark:border-gray-400 bg-transparent text-white px-1')}
-                    />
-                    <button onClick={handleChangeUsername} className={twMerge('text-blue-500 hover:underline')}>
-                      Save
-                    </button>
-                  </>
-                ) : (
-                  <RiPencilLine
-                    color='green'
-                    size={20}
-                    className={twMerge('cursor-pointer text-gray-500 dark:text-gray-400 hover:text-blue-500')}
-                    onClick={handleEditUsername}
-                  />
-                )}
-              </div>
+                 <>
+                 <input
+                   type="text"
+                   value={newUsername}
+                   onChange={(e) => setNewUsername(e.target.value)}
+                   aria-label="New Username"
+                   className={twMerge('border-b border-gray-500 dark:border-gray-400 bg-transparent text-white px-1 ml-1')}
+                 />
+                 <button onClick={handleChangeUsername} className={twMerge('text-blue-500 hover:underline')}>
+                   Save
+                 </button>
+               </>
+             ) : (
+               <>
+                 <span className={twMerge('ml-auto mr-2')}>
+                   <RiPencilLine
+                     color='green'
+                     size={20}
+                     className={twMerge('cursor-pointer text-gray-500 dark:text-gray-400 hover:text-blue-500')}
+                     onClick={handleEditUsername}
+                   />
+                 </span>
+               </>
+             )}
+           </div>
 
               <div className={twMerge('flex items-center mt-4')}>
                 <span className={twMerge('text-gray-500 dark:text-gray-400 flex items-center mt-4 border-gray-200 rounded-lg h-16 w-full border px-4')}>
@@ -287,17 +310,17 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
                 </span>
               </div>
 
-              <div className={twMerge('flex justify-between items-center mt-4')}>
+              {/* <div className={twMerge('flex justify-between items-center mt-4')}>
                 <span className={twMerge('font-sans text-gray-500 dark:text-gray-400 flex items-center cursor-pointer- mt-4 border-gray-50 rounded-lg h-9 w-full border px-4')}>
                   Add another account <span className='flex ml-32'></span>
                 </span>
-              </div>
+              </div> */}
 
-              <div className={twMerge('flex justify-between items-center mt-4')}>
+              {/* <div className={twMerge('flex justify-between items-center mt-4')}>
                 <span className={twMerge('text-gray-500 dark:text-gray-400 flex items-center mt-4 border-green-400 rounded-lg h-20 w-full border px-4')}>
                   <span className='mr-2'><RiBriefcaseFill /></span> My Workspaces <span className='flex ml-32'><IoIosArrowDropdown color='green' size={25} /></span>
                 </span>
-              </div>
+              </div> */}
 
 
               <div className={twMerge('flex justify-between items-center mt-32')}>
@@ -307,9 +330,9 @@ export default function ProfileSlider({ avatarData, setIsProfileChange, isProfil
                 <RiSunLine
                   size={20}
                   className={twMerge('cursor-pointer text-yellow-500 hover:text-yellow-700')}
-                  onClick={toggleDarkMode}
+                 
                 />
-                <Switch />
+               <Switch onClick={toggleDarkMode} checked={darkMode} />
 
               </div>
             </div>

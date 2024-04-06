@@ -5,10 +5,10 @@ export default function Home() {
   return (
     <div className="min-h-screen  w-full bg-customColor">
       <div className="flex flex-col items-center justify-center h-1/2 lg:h-3/4 py-20 lg:py-36 mx-auto">
-        <h3 className="text-center text-3xl md:text-4xl lg:text-5xl font-merriweather py-5 text-white">
+        <h3 className="text-center text-3xl md:text-4xl lg:text-5xl font-merriweather py-5 text-gray-900 dark:text-white">
           Start Real-time <span className="text-yellow-300">Collaboration</span>
         </h3>
-        <i className="text-center text-base md:text-lg lg:text-xl text-white">
+        <i className="text-center text-gray-900 text-base md:text-lg lg:text-xl dark:text-white">
           "If everyone is moving forward together, then success takes care of itself." - Henry Ford
         </i>
         <button className="bg-purple-700 mt-5 hover:bg-purple-900 text-white font-bold py-2 px-4 rounded-full 
@@ -17,7 +17,7 @@ export default function Home() {
         </button>
       </div>
      
-      <div className="text-white text-center py-8 h-[100vh] relative z-10">
+      <div className="dark:text-white text-gray-900 text-center py-8 h-[100vh] relative z-10">
         <div className="absolute inset-0 flex justify-center items-center">
           <div className="absolute bg-gradient-to-r from-blue-950 to-blue-950 w-4/6 h-3/4 rounded-full blur-3xl mb-20"></div>
         </div>
@@ -36,7 +36,7 @@ export default function Home() {
           />
         </div>
       </div>
-      <div className="text-white text-center py-8 h-[100vh] relative z-10">
+      <div className="dark:text-white text-gray-900 text-center py-8 h-[100vh] relative z-10">
         <div className="absolute inset-0 flex justify-between items-stretch">
           <div className="absolute bg-gradient-to-r from-blue-950 to-blue-950 w-4/6 h-3/4 rounded-full blur-3xl mb-20"></div>
         </div>

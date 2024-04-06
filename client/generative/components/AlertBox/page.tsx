@@ -60,7 +60,6 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
   const handleCreateWorkspace = async () => {
   if (selectedImageIndex !== null) {
     const workspaceName = inputRef.current ?.value??'';
-    console.log("wsp",workspaceName);
 
     try {
 
@@ -68,6 +67,7 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
       setErrorMessage(null);
 
       if (status === 'authenticated' && session?.user) {
+        setLoading(true); 
         // If the user is authenticated, use the session information
         const response = await axios.post('http://localhost:8000/new-workspace', {
           imageIndex: selectedImageIndex,
@@ -75,16 +75,18 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
           user: session.user, 
         });
         console.log("Server response:", response.data);
+        const userid = response.data.userId
 
         const workspaceId = response.data.workspace.workspaceId;
         console.log("my workspace",workspaceId);
 
         useStore.getState().setWorkspaceName(workspaceName);
-
-        router.replace(`/home/${workspaceId}`);
-
+        
+        router.replace(`/home/${userid}/${workspaceId}`);
+        setLoading(false);
         setIsModalOpen(false);
       } else {
+        setLoading(true); 
         // If not authenticated, use the token
         const token = document.cookie.replace(/(?:(?:^|.*;\s*)token\s*=\s*([^;]*).*$)|^.*$/, "$1");
         const response = await axios.post('http://localhost:8000/new-workspace', {
@@ -96,14 +98,14 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
           },
         });
         console.log("Server response:", response.data);
-
+        const userid = response.data.userId
         const workspaceId = response.data.workspace.workspaceId;
         console.log("my workspace",workspaceId);
 
         useStore.getState().setWorkspaceName(workspaceName);
 
-        router.replace(`/home/${workspaceId}`);
-
+        router.replace(`/home/${userid}/${workspaceId}`);
+        setLoading(false); 
         setIsModalOpen(false);
       }
     } catch (error) {
@@ -113,6 +115,10 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
     }
   }
 };
+
+if(loading){
+  return <Loaders />
+}
 
 
   return (

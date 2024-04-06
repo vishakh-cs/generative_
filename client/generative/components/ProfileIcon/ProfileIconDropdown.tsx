@@ -16,6 +16,8 @@ import axios from 'axios';
 import InputEmoji from 'react-input-emoji'
 import { useRouter } from 'next/navigation';
 import useStore from '@/Stores/store';
+import { signOut } from 'next-auth/react';
+import { destroyCookie } from 'nookies';
 
 interface User {
   _id: string;
@@ -42,7 +44,8 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   const [messages, setMessages] = useState([]);
 
   const setOtherWorkspaceId = useStore((state)=>state.setOtherWorkspaceId);
- 
+  const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
+  const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
 
   const router = useRouter();
 
@@ -175,10 +178,17 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
     setChatId(chats[0]?._id);
   };
 
-  // const handleMeetingRoomClick = () => {
-  //   const destination = otherWorkspaceIds.length > 0 ? otherWorkspaceIds[0] : workspaceId;
-  //   router.push(`/home/${user_data._id}/${destination}/Rooms`);
-  // };
+
+  const handleLogout = async () => {
+
+    destroyCookie(null, 'token', { path: '/' });
+    await signOut({ redirect: false });
+    
+    setIsLogoutClicked(true);
+    setOpen(false);
+    router.replace('/');
+    resetLogoutClicked();
+  };
 
   const handleMeetingRoomClick = () => {
     // const destination = otherWorkspaceIds.length > 0 ? otherWorkspaceIds[0] : workspaceId;
@@ -227,7 +237,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
               {/* Render owner users */}
               {owner && owner.email !== user_data.email && (
                 // Render owner's email and chat icon
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-center text-xs">
                   <Image
                     src={owner.profileImageUrl}
                     alt="Profile"
@@ -237,17 +247,17 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
                     title={owner.email}
                   />
                   <span>{owner.email}</span>
-                  <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) => { e.preventDefault(); handleChatClick(owner) }}>
+                  {/* <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) => { e.preventDefault(); handleChatClick(owner) }}>
                     <span className='text-sm font-semibold'>chat</span>
                     <FiMessageSquare size={15} />
-                  </button>
+                  </button> */}
                 </div>
               )}
               {/* Render collaborating users */}
               {collaboratingUsers.map((collaborator, index) => (
                 // Check if the collaborator is not the current user
                 collaborator.email !== user_data.email && (
-                  <div key={index} className="flex items-center justify-between text-xs">
+                  <div key={index} className="flex items-center justify-center text-xs">
                     <Image
                       src={collaborator.profileImageUrl}
                       alt="Profile"
@@ -257,10 +267,10 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
                       title={collaborator.email}
                     />
                     <span>{collaborator.email}</span>
-                    <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) => { e.preventDefault(); handleChatClick(collaborator) }}>
+                    {/* <button type='button' className="text-indigo-500 flex items-center gap-1" onClick={(e) => { e.preventDefault(); handleChatClick(collaborator) }}>
                       <span className='text-sm font-semibold'>chating</span>
                       <FiMessageSquare size={15} />
-                    </button>
+                    </button> */}
                   </div>
                 )
               ))}
@@ -268,14 +278,15 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
           </li>
 
           {/* Render other options */}
-          <Option setOpen={setOpen} Icon={FiPlusSquare} text="Add Collaborator" />
-          <Option setOpen={setOpen} Icon={FiEdit} text="Edit History" />
+          {/* <Option setOpen={setOpen} Icon={FiEdit} text="Edit History" /> */}
           {(collaboratingUsers.length > 0 || otherWorkspaceIds.length > 0) && (
           <button onClick={() => handleMeetingRoomClick()}>
             <Option setOpen={setOpen} Icon={FiUsers} text="Meeting Room" />
           </button>
         )}
+          <div onClick={handleLogout}>
           <Option setOpen={setOpen} Icon={FiShare} text="Logout" />
+          </div>
         </motion.ul>
       </motion.div>
 
