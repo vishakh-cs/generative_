@@ -13,7 +13,6 @@ const PageNameModal : React.FC<PageNameModalProps>= ({ onClose, onSubmit }) => {
   const [pageName, setPageName] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  console.log("hiiii 123");
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();

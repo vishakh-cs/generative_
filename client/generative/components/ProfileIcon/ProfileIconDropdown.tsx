@@ -11,7 +11,6 @@ import {
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { PiPaperPlaneTilt } from "react-icons/pi";
-import Conversation from './Conversation';
 import axios from 'axios';
 import InputEmoji from 'react-input-emoji'
 import { useRouter } from 'next/navigation';
@@ -26,7 +25,14 @@ interface User {
 
 }
 
+interface Message {
+  senderId: string;
+  text: string;
+  chatId: string;
+ }
+
 const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_data: User }> = ({ workspaceId, pageId, user_data }) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [open, setOpen] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [chats, setChats] = useState<any[]>([]);
@@ -41,7 +47,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   const [otherWorkspaceIds, setOtherWorkspaceIds] = useState<string[]>([]);
 
 
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const setOtherWorkspaceId = useStore((state)=>state.setOtherWorkspaceId);
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
@@ -54,11 +60,11 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   console.log("collabrationWorkspace:", collabrationWorkspace);
 
 
-  const handleChange = (newMessage) => {
+  const handleChange = (newMessage :string) => {
     setNewMessage(newMessage)
   }
 
-  const handleSend = async (e) => {
+  const handleSend = async (e: React.MouseEvent<SVGElement>) => {
     e.preventDefault();
     try {
       const message = {
@@ -67,7 +73,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
         chatId: chatId,
       };
 
-      const response = await axios.post('http://localhost:8000/addMessage/', message);
+      const response = await axios.post(`${baseUrl}/addMessage/`, message);
       console.log('Message sent successfully:', response.data);
       setMessages([...messages, response.data]);
       setNewMessage('');
@@ -85,7 +91,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
       try {
         console.log("user_data", user_data);
 
-        const response = await fetch(`http://localhost:8000/chatUser/${user_data._id}`);
+        const response = await fetch(`${baseUrl}/chatUser/${user_data._id}`);
         if (response.ok) {
           const data = await response.json();
           setChats(data);
@@ -99,7 +105,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
     };
 
     fetchData();
-  }, [user_data]);
+  }, [baseUrl, user_data]);
 
 
   // fetch collabdata
@@ -107,7 +113,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   useEffect(() => {
     const fetchCollaboratingUsers = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/get_collaborating_users`, {
+        const response = await axios.get(`${baseUrl}/get_collaborating_users`, {
           params: {
             workspaceId: workspaceId,
           },
@@ -122,7 +128,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
     };
 
     fetchCollaboratingUsers();
-  }, [workspaceId]);
+  }, [baseUrl, workspaceId]);
 
 
   // fetch for collab data
@@ -130,7 +136,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   useEffect(() => {
     const fetchCollaboratingUsers = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/get_otherCollab_users`, {
+        const response = await axios.get(`${baseUrl}/get_otherCollab_users`, {
           params: {
             workspaceId: workspaceId,
           },
@@ -147,6 +153,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
     };
 
     fetchCollaboratingUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
 
@@ -305,11 +312,7 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
               <h2 className='text-white ml-2 font-bold py-2'>{chatCollaborator.email}</h2>
             </div>
             <div className="flex-1 overflow-y-auto text-black">
-              {chats?.map((chat) => (
-                <div key={chat._id}>
-                  <Conversation chat={chat} currentUserId={user_data._id} setMessages={setMessages} messages={messages} />
-                </div>
-              ))}
+             
             </div>
             <div className="flex justify-around gap-3 items-center bg-white rounded-b-md mt-1">
               <InputEmoji
@@ -331,7 +334,13 @@ const ProfileIconDropDown: React.FC<{ workspaceId: string; pageId: string; user_
   );
 };
 
-const Option = ({ text, Icon, setOpen }) => {
+interface OptionProps {
+  text: string;
+  Icon: any;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const Option: React.FC<OptionProps> = ({ text, Icon, setOpen }) => {
   return (
     <motion.li
       variants={itemVariants}

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import useStore from "@/Stores/store";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,6 +8,7 @@ import { FiAlertCircle } from "react-icons/fi";
 import { IoLockClosed } from "react-icons/io5";
 
 interface User {
+    _id: string;
     id: string;
     name: string;
     status: string;
@@ -16,9 +18,12 @@ interface User {
 
 interface InviteCollabProps {
     workspaceId: string;
+    workspaceType:string;
 }
 
-const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollabProps) => {
+const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId ,workspaceType }: InviteCollabProps) => {
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<User[]>([]);
@@ -36,7 +41,7 @@ const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollab
     useEffect(() => {
         const fetchCollaboratingUsers = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/get_collaborating_users`, {
+                const response = await axios.get(`${baseUrl}/get_collaborating_users`, {
                     params: {
                         workspaceId: workspaceId,
                     },
@@ -49,13 +54,13 @@ const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollab
         };
 
         fetchCollaboratingUsers();
-    }, [workspaceId]);
+    }, [baseUrl, workspaceId]);
 
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const response = await axios.get(`http://localhost:8000/find_collab_user`, {
+                const response = await axios.get(`${baseUrl}/find_collab_user`, {
                     params: {
                         query: searchQuery,
                         workspaceId: workspaceId,
@@ -76,13 +81,13 @@ const InviteCollab: React.FC<InviteCollabProps> = ({ workspaceId }: InviteCollab
         } else {
             setSearchResults([]);
         }
-    }, [searchQuery, workspaceId]);
+    }, [baseUrl, searchQuery, workspaceId]);
 
 
     const handleRemoveCollaborator = async (userId: string) => {
         console.log("userId", userId);
         try {
-            const response = await axios.post("http://localhost:8000/remove_collaborator", {
+            const response = await axios.post(`${baseUrl}/remove_collaborator`, {
                 userId: userId,
                 workspaceId: workspaceId,
             });
@@ -142,10 +147,11 @@ const SpringModal = ({
     collaboratingUsers?: User[];
     handleRemoveCollaborator: (userId: string) => Promise<void>;
 }) => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
     const handleInvite = async (user: User) => {
         try {
-            const invitePromise = axios.post("http://localhost:8000/send_email_notification", {
+            const invitePromise = axios.post(`${baseUrl}/send_email_notification`, {
                 userEmail: user.email,
                 workspaceId: workspaceId,
             });

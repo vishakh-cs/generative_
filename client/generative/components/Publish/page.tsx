@@ -4,15 +4,21 @@ import { MdContentCopy } from "react-icons/md";
 import { Check } from "lucide-react";
 import toast, { ToastBar, Toaster } from 'react-hot-toast';
 
-function Publish({ workspaceid ,pageId}) {
-  const baseUrl = 'http://localhost:3000';
+interface PublishProps {
+  workspaceid: string;
+  pageId: string;
+}
+
+const Publish:React.FC<PublishProps>=({ workspaceid ,pageId}) =>{
+  const clientUrl = 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [publishData, setPublishData] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false); 
 
-  const url = `${baseUrl}/public/preview/${workspaceid}/${pageId}`;
+  const url = `${clientUrl}/public/preview/${workspaceid}/${pageId}`;
   console.log("url ", url);
 
   const openModal = () => {
@@ -43,7 +49,7 @@ function Publish({ workspaceid ,pageId}) {
   };
 
   const sendPublishRequest = () => {
-    axios.post('http://localhost:8000/publish_document', {workspaceId: workspaceid, })
+    axios.post(`${baseUrl}/publish_document`, {workspaceId: workspaceid, })
     .then(response => {
       toast.success("Page Published Successfully!");
       console.log('Publish request successful');
@@ -54,7 +60,7 @@ function Publish({ workspaceid ,pageId}) {
   };
 
   const sendUnpublishRequest = () => {
-    axios.post('http://localhost:8000/unpublish_document', {workspaceId: workspaceid,})
+    axios.post(`${baseUrl}/unpublish_document`, {workspaceId: workspaceid,})
     .then(response => {
       toast.success("Page Unpublished Successfully!");
       console.log('Unpublish request successful');
@@ -110,7 +116,7 @@ function Publish({ workspaceid ,pageId}) {
                 </div>
               ) : (
                 <div className="mt-4 flex gap-2">
-                  <button type="button" className={`rounded ${isPublished ? "bg-green-100" : "bg-green-50"} px-4 py-2 text-sm font-medium ${isPublished ? "text-green-600" : "text-green-800"}`} onClick={loading ? null : publish}>
+                  <button type="button" className={`rounded ${isPublished ? "bg-green-100" : "bg-green-50"} px-4 py-2 text-sm font-medium ${isPublished ? "text-green-600" : "text-green-800"}`} onClick={loading ? undefined : publish}>
                     {loading ? (
                       <div className="flex items-center space-x-2">
                         <div className="w-4 h-4 border-t-2 border-b-2 border-green-500 rounded-full animate-spin"></div>

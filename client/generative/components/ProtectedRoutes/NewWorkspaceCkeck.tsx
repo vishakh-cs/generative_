@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 
 function NewWorkspaceCkeck() {
-
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     const router = useRouter();
     const userEmail = useStore((state) => state.userEmail);
 
@@ -15,7 +15,7 @@ function NewWorkspaceCkeck() {
 
     const checkWorkspace = async () => {
         try {
-           const response = await axios.post('http://localhost:8000/checkNewWorkspace', {
+           const response = await axios.post(`${baseUrl}/checkNewWorkspace`, {
              email: userEmail, 
            });
        
@@ -27,7 +27,7 @@ function NewWorkspaceCkeck() {
            } else {
              router.push('/new_workspace');
            }
-        } catch (error) {
+        } catch (error :any) {
            console.error('Error checking workspace:', error.message);
         }
        };
@@ -35,6 +35,7 @@ function NewWorkspaceCkeck() {
     
       useEffect(() => {
         checkWorkspace();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
 
 }

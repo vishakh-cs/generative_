@@ -6,7 +6,11 @@ import { destroyCookie } from 'nookies'
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-export default function LogoutModal({ onClose }) {
+interface LogoutModalProps {
+  onClose: () => void;
+}
+
+export default function LogoutModal({ onClose }: LogoutModalProps) {
   const [open, setOpen] = useState(true)
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
   const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);

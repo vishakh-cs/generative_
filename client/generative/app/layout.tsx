@@ -29,7 +29,7 @@ export default function RootLayout({
     if (savedDarkMode) {
       setDarkMode(JSON.parse(savedDarkMode)); 
     }
-  }, []);
+  }, [setDarkMode]);
 
   const pathname = usePathname();
   const showNavbar = pathname === '/';
@@ -47,7 +47,7 @@ export default function RootLayout({
       <body className={`${inter.className} `}>
       <NextAuthProvider>
       <EdgeStoreProvider>
-          {showNavbar && <Navbar  darkMode={darkMode} />}
+          {showNavbar && <Navbar />}
           {children}
           </EdgeStoreProvider>
         </NextAuthProvider>

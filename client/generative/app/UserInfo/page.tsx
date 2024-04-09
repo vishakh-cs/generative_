@@ -1,13 +1,14 @@
+// @ts-nocheck
 "use client"
 import GoogleAuthButton from "@/components/GoogleAuthButton/page";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import jwt from 'jsonwebtoken';
 import axios from "axios";
 
 export default function UserInfo() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     const { status, data: session } = useSession();
     const router = useRouter();
   
@@ -18,7 +19,7 @@ export default function UserInfo() {
       const setToken = async () => {
         if (status === 'authenticated' && session) {
           try {
-            const response = await axios.post('http://localhost:8000/set-token', {
+            const response = await axios.post(`${baseUrl}/set-token`, {
               userId: session?.user?.id,
               email: session?.user?.email,
             });
@@ -37,14 +38,14 @@ export default function UserInfo() {
             } else {
               console.error('Failed to set token:', response.data.message);
             }
-          } catch (error) {
+          } catch (error:any) {
             console.error('Error setting token:', error.message);
           }
         }
       };
   
       setToken();
-    }, [status, session ]);
+    }, [status, session, baseUrl, router]);
   
     if (status === 'loading') {
       return <p>Loading...</p>;

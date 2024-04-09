@@ -29,6 +29,7 @@ interface SettingsSliderProps {
 }
 
 export function SettingsSlider({ workspaceId, workspaceName, workspaceLogoIndex, workspaceType }: SettingsSliderProps) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [originalWorkspaceName, setOriginalWorkspaceName] = useState(workspaceName);
@@ -63,7 +64,7 @@ export function SettingsSlider({ workspaceId, workspaceName, workspaceLogoIndex,
 
   const handleUpdateWorkspaceName = async () => {
     try {
-      await axios.post("http://localhost:8000/updateWorkspaceName", {
+      await axios.post(`${baseUrl}/updateWorkspaceName`, {
         workspaceId: workspaceId,
         newName: newWorkspaceName,
       });

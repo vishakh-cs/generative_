@@ -12,6 +12,7 @@ import ProfileIcon from '@/components/ProfileIcon/page';
 import Publish from '@/components/Publish/page';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/Loaders/Spinner';
+import PreviewSkelton from '@/components/Loaders/PreviewSkleton';
 
 interface WorkspaceIdProps {
   params: {
@@ -23,7 +24,7 @@ interface WorkspaceIdProps {
  
 
  const WorkspaceId: React.FC<WorkspaceIdProps> = ({ params }) => {
-
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const router = useRouter();
   const isLogoutClicked = useStore((state) => state.isLogoutClicked);
   const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
@@ -32,10 +33,11 @@ interface WorkspaceIdProps {
   const userEmail = localStorage.getItem('userEmail');
   const [loading, setLoading] = useState(true);
   const userID = useStore(state => state.userID);
+  const isPageClick = useStore(state=>state.isPageClick);
 
   localStorage.setItem('USER_ID', params.userDataid);
 
-
+  console.log("isPageClick",isPageClick);
   console.log("userID12",userID);
 
   useEffect(()=>{
@@ -43,12 +45,12 @@ interface WorkspaceIdProps {
       return  router.push('/404')
     }
     setLoading(false)
-  },[])
+  },[params.userDataid, router, userID])
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/protected_workspace/${params.workspaceid}`);
+        const response = await fetch(`${baseUrl}/protected_workspace/${params.workspaceid}`);
         if (response.ok) {
           const data = await response.json();
           setUserData(data.email);
@@ -62,15 +64,22 @@ interface WorkspaceIdProps {
         console.error('Error fetching user data:', error);
       } finally {
         setLoading(false);
+        useStore.setState({ isPageClick: false });
       }
     };
   
     fetchUserData();
-  }, [params.workspaceid , userEmail, router]);
+  }, [params.workspaceid, userEmail, router, baseUrl ]);
 
 
   if(loading){
     return <Spinner />
+  }
+
+  if(isPageClick){
+    return <div className=' mt-5 py-3'>
+      <PreviewSkelton />
+      </div>
   }
 
   console.log('isLogoutClicked:', isLogoutClicked);

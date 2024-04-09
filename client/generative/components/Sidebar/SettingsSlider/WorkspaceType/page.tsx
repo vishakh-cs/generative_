@@ -10,16 +10,18 @@ import useStore from "@/Stores/store";
 
 interface WorkpaceTypeDropDownProps {
   workspaceType: string;
+  workspaceId:string;
 }
 
 const WorkpaceTypeDropDown: React.FC<WorkpaceTypeDropDownProps> = ({ workspaceType ,workspaceId}) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [open, setOpen] = useState(false);
   const [currentWorkspaceType, setCurrentWorkspaceType] = useState<string | null>(null);
   const updatedWorkspaceType=useStore((state)=>state.workspaceType)
 
   const fetchWorkspaceData = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/get_workspace_data/${workspaceId}`);
+      const response = await axios.get(`${baseUrl}/get_workspace_data/${workspaceId}`);
       const workspaceData = response.data;
 
       setCurrentWorkspaceType(workspaceData.type);
@@ -35,7 +37,7 @@ const WorkpaceTypeDropDown: React.FC<WorkpaceTypeDropDownProps> = ({ workspaceTy
   const handleWorkspaceTypeChange = async (newType: string) => {
     try {
 
-      const response = await axios.post('http://localhost:8000/change_workspace_type', {
+      const response = await axios.post(`${baseUrl}/change_workspace_type`, {
         workspaceId: workspaceId,
         newType: newType,
       });
@@ -52,12 +54,14 @@ const WorkpaceTypeDropDown: React.FC<WorkpaceTypeDropDownProps> = ({ workspaceTy
 
   useEffect(() => {
     fetchWorkspaceData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
   useEffect(() => {
     if (currentWorkspaceType) {
       fetchWorkspaceData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWorkspaceType]);
 
   return (
@@ -72,7 +76,7 @@ const WorkpaceTypeDropDown: React.FC<WorkpaceTypeDropDownProps> = ({ workspaceTy
       </button>
 
       <motion.ul
-        initial={wrapperVariants.closed}
+        initial={false}
         variants={wrapperVariants}
         style={{ originY: "top", translateX: "-50%" }}
         className="flex flex-col gap-2 p-2 rounded-lg bg-white shadow-xl absolute top-[120%] left-[50%] w-48 overflow-hidden"

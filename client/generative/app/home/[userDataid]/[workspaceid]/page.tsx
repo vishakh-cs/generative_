@@ -6,18 +6,22 @@ import ProtectedRoutes from '@/components/ProtectedRoutes/page';
 import BannerImage from '@/components/workspaceBanner/BannerImage';
 import ProfileSlider from '@/components/Sidebar/ProfileSlider/page';
 import { RoomProvider } from '@/liveblocks.config';
-import CollaborativeEditor from '@/components/CollaborativeEditor/Editor';
 import { ClientSideSuspense } from '@liveblocks/react';
 import LandingWorkspace from '@/components/LandingWorkspace/page';
-import { CollabAlertBox } from '@/components/CollabAlertBox/page';
 import { useRouter } from 'next/navigation';
 import Loaders from '@/components/Loaders/page';
 
 
-export default function workspaceid({ params }) {
+interface WorkspaceIdProps {
+  params: {
+    workspaceid: string;
+  };
+}
+
+const WorkspaceId: React.FC<WorkspaceIdProps> = ({ params }) => {
 
   const router = useRouter();
-
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const isLogoutClicked = useStore((state) => state.isLogoutClicked);
   const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
   const [userData, setUserData] = useState(null);
@@ -29,7 +33,7 @@ export default function workspaceid({ params }) {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/protected_workspace/${params.workspaceid}`);
+        const response = await fetch(`${baseUrl}/protected_workspace/${params.workspaceid}`);
         if (response.ok) {
           const data = await response.json();
           setUserData(data.email);
@@ -47,7 +51,7 @@ export default function workspaceid({ params }) {
     };
   
     fetchUserData();
-  }, [params.workspaceid , userEmail, router]);
+  }, [params.workspaceid , userEmail, router,baseUrl]);
 
   console.log('isLogoutClicked:', isLogoutClicked);
 
@@ -61,7 +65,7 @@ export default function workspaceid({ params }) {
  }
 
   return (
-    <ProtectedRoutes UserEmail={userData}>
+    <ProtectedRoutes >
       <div className='dark:bg-workspaceColor min-h-screen'>
         {isLogoutClicked ? (
           <LogoutModal onClose={() => resetLogoutClicked()} />
@@ -79,3 +83,4 @@ export default function workspaceid({ params }) {
     </ProtectedRoutes>
   );
 }
+export default WorkspaceId;

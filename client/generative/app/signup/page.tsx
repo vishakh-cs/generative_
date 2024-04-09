@@ -12,6 +12,7 @@ interface UserData {
 }
 
 export default function Signup() {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     const checkPasswordStrength = (password: string): number => {
         const minLength = 6;
         const hasLowerCase = /[a-z]/.test(password);
@@ -71,7 +72,7 @@ export default function Signup() {
         console.log('Client-side userData:', userData);
 
         try {
-            const response = await axios.post('http://localhost:8000/signup', {
+            const response = await axios.post(`${baseUrl}/signup`, {
                 UserName: userData.Username,
                 phonenumber: userData.phonenumber,
                 email: userData.email,

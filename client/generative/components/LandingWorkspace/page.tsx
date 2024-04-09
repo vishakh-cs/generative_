@@ -1,7 +1,6 @@
 import React from 'react';
 import { HiOutlineChatAlt2 } from 'react-icons/hi';
 import { RiFilePaper2Line } from 'react-icons/ri';
-import { BiPresentation } from 'react-icons/bi';
 import { AiOutlineSchedule } from 'react-icons/ai';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';

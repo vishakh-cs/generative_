@@ -5,7 +5,6 @@ import YPartyKitProvider from "y-partykit/provider";
 import {
   useCreateBlockNote,
   BlockNoteView,
-  ReactSlashMenuItem,
   getDefaultReactSlashMenuItems,
   DefaultReactSuggestionItem,
   SuggestionMenuController,
@@ -19,8 +18,6 @@ import { WebrtcProvider } from "y-webrtc";
 import LiveblocksProvider from "@liveblocks/yjs";
 import {useRoom, useSelf } from '@/liveblocks.config';
 import useStore from '@/Stores/store';
-
-
 
 interface EditorProps {
   // workspaceId: string;
@@ -57,7 +54,14 @@ export const Editor = ({
   );
 }
 
-function BlockNote({ doc, provider, pageId }: EditorProps) {
+
+interface BlockNoteProps {
+  doc: Y.Doc;
+  provider: any;
+  pageId: string;
+}
+
+const BlockNote: React.FC<BlockNoteProps> = ({ doc, provider, pageId }) => {
   const currentUser = useSelf();
 
   const { complete } = useCompletion({
@@ -130,19 +134,20 @@ function BlockNote({ doc, provider, pageId }: EditorProps) {
     ...getDefaultReactSlashMenuItems(editor),
   ];
 
-  const user = useStore(state => state.user_data.name); 
+  const userName = useStore(state => state.user_data.name); 
+
+  const darkMode =useStore(state=>state.darkMode)
   const { theme, setTheme } = useTheme();
-  let mode: "dark" | "light" = "dark";
-  if (theme === "light") {
-    mode = "light";
-  }
+  let mode: "dark" | "light" = darkMode ? "dark" : "light";
+
 
   const editor = useCreateBlockNote({
     collaboration: {
       provider,
       fragment: doc.getXmlFragment(pageId),
       user: {
-        name: user?.fullname as string,
+        name: userName as string,
+        color: ''
       },
     },
   });
@@ -160,84 +165,4 @@ function BlockNote({ doc, provider, pageId }: EditorProps) {
     </div>
   );
 }
-
-
-// function getPrevText(editor: BlockNoteEditor<import("@blocknote/core").BlockSchemaFromSpecs<{ paragraph: { config: { type: "paragraph"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "paragraph"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; heading: { config: { type: "heading"; content: "inline"; propSchema: { level: { default: number; values: readonly [1, 2, 3]; }; backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "heading"; content: "inline"; propSchema: { level: { default: number; values: readonly [1, 2, 3]; }; backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; bulletListItem: { config: { type: "bulletListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "bulletListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; numberedListItem: { config: { type: "numberedListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "numberedListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; image: { config: { type: "image"; propSchema: { textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; backgroundColor: { default: "default"; }; url: { default: ""; }; caption: { default: ""; }; width: { default: 512; }; }; content: "none"; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "image"; propSchema: { textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; backgroundColor: { default: "default"; }; url: { default: ""; }; caption: { default: ""; }; width: { default: 512; }; }; content: "none"; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; table: { config: { type: "table"; content: "table"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "table"; content: "table"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; }>, import("@blocknote/core").InlineContentSchemaFromSpecs<{ text: { config: "text"; implementation: any; }; link: { config: "link"; implementation: any; }; }>, import("@blocknote/core").StyleSchemaFromSpecs<{ bold: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; italic: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; underline: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; strike: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; code: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; textColor: { config: { type: string; propSchema: "string"; }; implementation: import("@blocknote/core").StyleImplementation; }; backgroundColor: { config: { type: string; propSchema: "string"; }; implementation: import("@blocknote/core").StyleImplementation; }; }>>, arg1: { chars: number; offset: number; }): string {
-//   throw new Error('Function not implemented.');
-// }
-//   // const doc = new Y.Doc();
-//   // const provider = new YPartyKitProvider(
-//   //   "blocknote-dev.yousefed.partykit.dev",
-//   //   pageId,
-//   //   doc,
-//   // );
-
-//   const editor = useCreateBlockNote({
-//     collaboration: {
-//       provider,
-//       fragment: doc.getXmlFragment("document-store"),
-//       user: {
-//         name: "Appu",
-//         color: "#ff0000",
-//       },
-//     },
-//   });
-
-//   const { complete } = useCompletion({
-//     id: "hackathon_starter",
-//     api: "/api/generate",
-//     onResponse: response => {
-//       if (response.status === 429) {
-//         return;
-//       }
-//       if (response.body) {
-//         const reader = response.body.getReader();
-//         let decoder = new TextDecoder();
-//         reader.read().then(function processText({ done, value }) {
-//           if (done) {
-//             return;
-//           }
-//           let chunk = decoder.decode(value, { stream: true });
-//           editor?.insertContent(chunk); // Ensure editor is defined before accessing insertContent
-//           reader.read().then(processText);
-//         });
-//       } else {
-//         console.error("Response body is null");
-//       }
-//     },
-//     onError: e => {
-//       console.error(e.message);
-//     },
-//   });
-
-//   const insertMagicItem: ReactSlashMenuItem = {
-//     name: 'Continue with AI',
-//     execute: () => {
-//       complete(
-//         getPrevText(editor, { chars: 5000, offset: 1 })
-//       );
-//     },
-//     aliases: ['ai', 'magic'],
-//     group: 'Magic',
-//     icon: <ImMagicWand size={18} />,
-//     hint: 'Continue your idea with some extra inspiration!',
-//   };
-
-//   // Ensure the insertMagicItem is added to the list of custom slash menu items
-//   const getCustomSlashMenuItems = (): ReactSlashMenuItem[] => [
-//     insertMagicItem,
-//   ];
-
-//   return (
-//     <div className='mt-10'>
-//       <BlockNoteView
-//         editor={editor}
-//         customSlashMenuItems={getCustomSlashMenuItems()}
-//       />
-//     </div>
-//   );
-// };
-// function getPrevText(editor: BlockNoteEditor<import("@blocknote/core").BlockSchemaFromSpecs<{ paragraph: { config: { type: "paragraph"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "paragraph"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; heading: { config: { type: "heading"; content: "inline"; propSchema: { level: { default: number; values: readonly [1, 2, 3]; }; backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "heading"; content: "inline"; propSchema: { level: { default: number; values: readonly [1, 2, 3]; }; backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; bulletListItem: { config: { type: "bulletListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "bulletListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; numberedListItem: { config: { type: "numberedListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "numberedListItem"; content: "inline"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; image: { config: { type: "image"; propSchema: { textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; backgroundColor: { default: "default"; }; url: { default: ""; }; caption: { default: ""; }; width: { default: 512; }; }; content: "none"; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "image"; propSchema: { textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; backgroundColor: { default: "default"; }; url: { default: ""; }; caption: { default: ""; }; width: { default: 512; }; }; content: "none"; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; table: { config: { type: "table"; content: "table"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }; implementation: import("@blocknote/core").TiptapBlockImplementation<{ type: "table"; content: "table"; propSchema: { backgroundColor: { default: "default"; }; textColor: { default: "default"; }; textAlignment: { default: "left"; values: readonly ["left", "center", "right", "justify"]; }; }; }, any, import("@blocknote/core").InlineContentSchema, import("@blocknote/core").StyleSchema>; }; }>, import("@blocknote/core").InlineContentSchemaFromSpecs<{ text: { config: "text"; implementation: any; }; link: { config: "link"; implementation: any; }; }>, import("@blocknote/core").StyleSchemaFromSpecs<{ bold: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; italic: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; underline: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; strike: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; code: { config: { type: string; propSchema: "boolean"; }; implementation: import("@blocknote/core").StyleImplementation; }; textColor: { config: { type: string; propSchema: "string"; }; implementation: import("@blocknote/core").StyleImplementation; }; backgroundColor: { config: { type: string; propSchema: "string"; }; implementation: import("@blocknote/core").StyleImplementation; }; }>>, arg1: { chars: number; offset: number; }): string {
-//   throw new Error('Function not implemented.');
-// }
 

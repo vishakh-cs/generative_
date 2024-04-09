@@ -30,7 +30,7 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
     "/Assets/workspace14.png",
   ];
 
-
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,7 +69,7 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
       if (status === 'authenticated' && session?.user) {
         setLoading(true); 
         // If the user is authenticated, use the session information
-        const response = await axios.post('http://localhost:8000/new-workspace', {
+        const response = await axios.post(`${baseUrl}/new-workspace`, {
           imageIndex: selectedImageIndex,
           workspaceName: workspaceName,
           user: session.user, 
@@ -89,7 +89,7 @@ const AlertBox: React.FC<AlertBoxProps> = () => {
         setLoading(true); 
         // If not authenticated, use the token
         const token = document.cookie.replace(/(?:(?:^|.*;\s*)token\s*=\s*([^;]*).*$)|^.*$/, "$1");
-        const response = await axios.post('http://localhost:8000/new-workspace', {
+        const response = await axios.post(`${baseUrl}/new-workspace`, {
           imageIndex: selectedImageIndex,
           workspaceName: workspaceName,
         }, {

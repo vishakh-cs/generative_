@@ -3,7 +3,12 @@ import Image from 'next/image'
 import React from 'react'
 import ProfileIconDropDown from './ProfileIconDropdown'
 
-function ProfileIcon({ workspaceId, pageId }) {
+interface ProfileIconProps {
+    workspaceId: string;
+    pageId: string;
+   }
+
+   const ProfileIcon: React.FC<ProfileIconProps> = ({ workspaceId, pageId }) => {
     const profileImage = useStore(state => state.profileImage)
     const userEmail = useStore(state => state.userEmail)
     const user_data=useStore(state=>state.user_data)
@@ -17,4 +22,4 @@ function ProfileIcon({ workspaceId, pageId }) {
     )
 }
 
-export default ProfileIcon
+export default ProfileIcon;

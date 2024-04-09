@@ -1,11 +1,11 @@
 //Sidebar/sidebar.tsx
+// @ts-nocheck
 "use client"
 import axios from 'axios';
 import Image from 'next/image';
-import React, { useEffect, useState, useContext, createContext, ReactNode } from 'react';
+import React, { useEffect, useState, useContext, createContext, ReactNode, MouseEvent } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { MoreVertical, ChevronLast, ChevronFirst } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HiOutlineLogout } from "react-icons/hi";
 import useStore from '@/Stores/store';
 import { IoMdAdd } from "react-icons/io";
@@ -45,9 +45,11 @@ interface Workspace {
 const SidebarContext = createContext<SidebarContextProps | undefined>(undefined);
 
 export default function Sidebar({ children, params }: SidebarProps) {
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [expanded, setExpanded] = useState(true);
   const [userData, setUserData] = useState<any>(null);
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [collabWorkspaces, setCollabWorkspaces] = useState<any[]>([]);
   const [pages, setPages] = useState<string[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -57,6 +59,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [workspaceid, setWorkspaceId] = useState('');
   const [loading, setLoading] = useState(false);
+  const setIsPageClick = useStore((state)=>state.setIsPageClick);
 
   const setIsLogoutClicked = useStore((state) => state.setLogoutClicked);
   const workspaceName = useStore((state) => state.workspaceName);
@@ -67,9 +70,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
   console.log("collabWorkspaces,collaboratorWorkspaceLogo", collabWorkspaces);
 
-  console.log("workspaces", workspaces);
-
-  const socket = io('http://localhost:8000');
+  const socket = io(`${baseUrl}`);
 
   const router = useRouter();
 
@@ -98,7 +99,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
         return;
       }
 
-      const response = await axios.post('http://localhost:8000/sidebar_data', {
+      const response = await axios.post(`${baseUrl}/sidebar_data`, {
         workspaceId: params.workspaceid,
       });
 
@@ -111,7 +112,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
       setUserData(data);
       setWorkspaces(workspaces);
       setCollabWorkspaces(collabWs);
-      const selectedWorkspace = workspaces.find(w => w.id === params.workspaceid);
+      const selectedWorkspace = workspaces.find((w: { id: any; }) => w.id === params.workspaceid);
 
     } catch (error: any) {
       console.error('Error fetching user data:', error.message);
@@ -123,13 +124,14 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.workspaceId, isPageRestored, isWorkspaceNameChanged, isProfileChange]);
 
   const userId = userData ? userData.id : null;
   localStorage.setItem('userId', userId);
 
 
-  const createWorkspace = async (e) => {
+  const createWorkspace = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
    
     try {
@@ -147,8 +149,10 @@ export default function Sidebar({ children, params }: SidebarProps) {
     console.log("pageIdpageId", pageId)
     if (Page_id) {
       setLoading(true);
+      setIsPageClick(true);
       router.replace(`/home/${userData.id}/${workspaceId}/${pageId}`);
       setLoading(false)
+      setIsPageClick(false);
       setSelectedPage(pageId);
     } else {
       console.error('Invalid pageId:', pageId);
@@ -203,8 +207,6 @@ export default function Sidebar({ children, params }: SidebarProps) {
     }
   };
 
-
-
   const handleModalSubmit = async (pageName: string) => {
     try {
       const newPage = pageName.trim() || `Page ${pages.length + 1}`;
@@ -212,7 +214,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
       console.log(`Added a new page: ${newPage}`);
 
-      const response = await axios.post('http://localhost:8000/add_page', {
+      const response = await axios.post(`${baseUrl}/add_page`, {
         workspaceId: params.workspaceid,
         pageName: newPage,
         pageContent: '',
@@ -235,7 +237,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
 
   const moveToTrash = async (pageId: string, pageName: string) => {
     try {
-      const response = await axios.post('http://localhost:8000/add_to_trash', {
+      const response = await axios.post(`${baseUrl}/add_to_trash`, {
         selectedPage: pageId,
       });
 
@@ -291,6 +293,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
       socket.off('addpage');
       socket.off('disconnect');
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -309,6 +312,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
       socket.off('disconnect');
     
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -326,6 +330,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
       socket.off('disconnect');
     
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
 
@@ -345,7 +350,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
         return;
       }
 
-      const response = await axios.post('http://localhost:8000/leave_collaboration', {
+      const response = await axios.post(`${baseUrl}/leave_collaboration`, {
         workspaceId: collabWorkspaces.id,
         userId: userData.id
       });
@@ -404,6 +409,7 @@ export default function Sidebar({ children, params }: SidebarProps) {
         {expanded && (
           <>
             <button
+              type='button'
               onClick={createWorkspace}
               className={twMerge('border-t flex p-3 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700')}
             >

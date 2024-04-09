@@ -1,14 +1,16 @@
+// @ts-nocheck
 import axios from "axios";
 import NextAuth from "next-auth/next";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials"
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
 
 const authOptions = {
     providers:[
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET
+            clientId: process.env.GOOGLE_CLIENT_ID || '',
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET ||''
           }),
         ],
         callbacks: {
@@ -17,7 +19,7 @@ const authOptions = {
             if (account?.provider === "google") {
               try {
                
-                const response = await axios.post("http://localhost:8000/googlelogin", {
+                const response = await axios.post(`${baseUrl}/googlelogin`, {
                   email: user.email,
                   userName: user.name,
                   profileData: profile,
@@ -37,7 +39,7 @@ const authOptions = {
                 } else {
                   console.error("Failed to send data to backend:", response.data.message);
                 }
-              } catch (error) {
+              } catch (error:any) {
                 console.error("Error sending data to backend:", error.message);
               }
             }

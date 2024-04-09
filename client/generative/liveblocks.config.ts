@@ -7,17 +7,17 @@ const client = createClient({
 });
 
 // Define resolve functions for Liveblocks features
-const resolveUsers = async ({ userIds }) => {
+const resolveUsers = async ({ }) => {
   // Return a list of user information
   return [];
 };
 
-const resolveMentionSuggestions = async ({ text }) => {
+const resolveMentionSuggestions = async ({ }) => {
   // Return a list of userIds that match text
   return [];
 };
 
-const resolveRoomsInfo = async ({ roomIds }) => {
+const resolveRoomsInfo = async ({ }) => {
   // Return a list of room information
   return [];
 };

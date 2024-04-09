@@ -16,7 +16,13 @@ import Loaders from '../Loaders/page';
 import useStore from '@/Stores/store';
 import { useRouter } from 'next/navigation';
 
-export default function Room({ roomId,userId, fallback}) {
+interface RoomProps {
+  roomId: string;
+  userId: string;
+  fallback: any; 
+}
+
+export default function Room({ roomId, userId, fallback }: RoomProps) {
  
   const router = useRouter();
 
@@ -57,6 +63,7 @@ export default function Room({ roomId,userId, fallback}) {
         console.error(e);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (token === "") {

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client"
 import useStore from "@/Stores/store";
 import { Button } from "@/components/ui/button"
@@ -14,7 +15,14 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-export function DeleteConformation({ workspaceId, workspaceName }) {
+interface DeleteConformationProps {
+    workspaceId: string;
+    workspaceName: string;
+}
+
+export const DeleteConformation: React.FC<DeleteConformationProps> = ({ workspaceId, workspaceName }) => {
+
+     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     const setPageRestored = useStore((state) => state.setPageRestored);
 
     const [error, setError] = useState('');
@@ -31,7 +39,7 @@ export function DeleteConformation({ workspaceId, workspaceName }) {
         }
     
         try {
-            const response = await axios.post("http://localhost:8000/delete_workspace", {
+            const response = await axios.post(`${baseUrl}/delete_workspace`, {
                 workspaceId
             });
             console.log(response.data);
@@ -40,7 +48,7 @@ export function DeleteConformation({ workspaceId, workspaceName }) {
             } else {
                 throw new Error(response.data.message || 'Error deleting workspace');
             }
-        } catch (error) {
+        } catch (error:any) {
             console.error("Error deleting workspace:", error);
             toast.error(error.response?.data?.message || 'Error deleting workspace');
         }

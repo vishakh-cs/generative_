@@ -32,19 +32,20 @@ interface WorkspaceIdProps {
 }
 
 const WorkspaceId: React.FC<WorkspaceIdProps> = ({ params }) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
  const [workspace, setWorkspace] = useState<Workspace>({ name: '', pageCount: 0, pages: [] , isPublished:false });
  const [pages, setPages] = useState<Page[]>([]);
  const [currentPageIndex, setCurrentPageIndex] = useState(0);
  const [currentpageId, setCurrentPageId] = useState('');
- const [isLoading, setIsLoading] = useState(true); // State to track loading
+ const [isLoading, setIsLoading] = useState(true);
  const isLogoutClicked = useStore((state) => state.isLogoutClicked);
  const resetLogoutClicked = useStore((state) => state.resetLogoutClicked);
  const[trigger,setTrigger]=useState(false)
- const [isDarkMode, setIsDarkMode] = useState(false);
+
 
  console.log("pages",pages);
  console.log("workspace",workspace);
- const socket = io('http://localhost:8000');
+ const socket = io(`${baseUrl}`);
 
  const baseurl = process.env.NEXT_PUBLIC_BASE_URL
  console.log("baseurl",baseurl);
@@ -63,12 +64,12 @@ const WorkspaceId: React.FC<WorkspaceIdProps> = ({ params }) => {
     socket.off('disconnect');
     setTrigger(false)
   };
-}, []);
+}, [socket]);
 
  useEffect(() => {
     const fetchWorkspaceData = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/get_publish_data?workspaceid=${params.workspaceid}`);
+        const response = await axios.get(`${baseUrl}/get_publish_data?workspaceid=${params.workspaceid}`);
         if (response.status === 200) {
           const data = response.data;
           console.log("data", data);
@@ -86,26 +87,26 @@ const WorkspaceId: React.FC<WorkspaceIdProps> = ({ params }) => {
     };
 
     fetchWorkspaceData();
- }, [params.workspaceid ,trigger]); 
+ }, [baseUrl, params.workspaceid, trigger]); 
 
  const nextPage = async () => {
   if (currentPageIndex < pages.length - 1) {
-    setIsLoading(true); // Set loading state to true
+    setIsLoading(true); 
     setCurrentPageIndex(currentPageIndex + 1);
     setCurrentPageId(pages[currentPageIndex + 1]._id);
     try {
       // Fetch content of the next page
-      const response = await axios.get(`http://localhost:8000/get_publish_data?pageid=${pages[currentPageIndex + 1]._id}`);
+      const response = await axios.get(`${baseUrl}/get_publish_data?pageid=${pages[currentPageIndex + 1]._id}`);
       if (response.status === 200) {
         // If data is fetched successfully, update state and set loading to false
         setIsLoading(false);
       } else {
         console.error('Failed to fetch page content');
-        setIsLoading(false); // Set loading to false in case of failure
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Error fetching page content:', error);
-      setIsLoading(false); // Set loading to false in case of error
+      setIsLoading(false); 
     }
   }
 };
@@ -117,7 +118,7 @@ const WorkspaceId: React.FC<WorkspaceIdProps> = ({ params }) => {
       setCurrentPageId(pages[currentPageIndex - 1]._id);
       try {
         // Fetch content of the previous page
-        const response = await axios.get(`http://localhost:8000/get_page_content?pageid=${pages[currentPageIndex - 1]._id}`);
+        const response = await axios.get(`${baseUrl}/get_page_content?pageid=${pages[currentPageIndex - 1]._id}`);
         if (response.status === 200) {
 
         } else {

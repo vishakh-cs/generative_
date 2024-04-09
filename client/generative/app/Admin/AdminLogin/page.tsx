@@ -2,20 +2,22 @@
 import axios from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { FormEvent } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 const AdminLogin = () => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
     const router = useRouter();
 
-    const handleAdminLogin = async (e) => {
+    const handleAdminLogin = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      let email = e.target.Email.value;
-      let password = e.target.password.value;
+      const formData = new FormData(e.currentTarget);
+      const email = formData.get('Email') as string;
+      const password = formData.get('password') as string;
      
       try {
-         const response = await axios.post(`http://localhost:8000/admin-login`, { email, password });
+         const response = await axios.post(`${baseUrl}/admin-login`, { email, password });
      
          if (response.data.success) {
            document.cookie = `token=${response.data.token}; path=/`;
@@ -24,7 +26,7 @@ const AdminLogin = () => {
          } else {
            toast.error(response.data.msg || 'Invalid Credentials!');
          }
-      } catch (error) {
+      } catch (error:any) {
          console.error(error);
          if (error.response && error.response.status === 404) {
            toast.error('The requested resource was not found. Please check the URL and try again.');

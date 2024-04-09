@@ -3,8 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { parseCookies } from 'nookies';
+import { ReactNode } from 'react';
 
-const ProtectedRoutes = ({ children ,}) => {
+interface ProtectedRoutesProps {
+  children: ReactNode;
+ }
+
+ const ProtectedRoutes = ({ children }: ProtectedRoutesProps) => {
   const userEmail = localStorage.getItem('userEmail');
   const { status, data: session } = useSession();
   const cookies = parseCookies();

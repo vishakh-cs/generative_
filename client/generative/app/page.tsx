@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import Pricing from "@/components/Pricing/page";
 import Image from "next/image";
 

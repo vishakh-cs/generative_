@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { BiRefresh } from 'react-icons/bi';
@@ -16,6 +16,8 @@ interface User {
 }
 
 export default function UserManagement() {
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const [isLoading, setLoading] = useState(true);
   const [userData, setUserData] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,9 +26,9 @@ export default function UserManagement() {
   const [searchedUser, setSearchedUser] = useState<User | null>(null);
   const [isSearchPerformed, setIsSearchPerformed] = useState(false);
 
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8000/userdata', {
+      const response = await axios.get(`${baseUrl}/userdata`, {
         params: {
           page: currentPage,
           pageSize,
@@ -39,33 +41,33 @@ export default function UserManagement() {
     } finally {
       setLoading(false);
     }
-  };
+ }, [baseUrl, currentPage, pageSize, searchTerm]);
 
-  const searchUser = async () => {
-    try {
-      const response = await axios.get(`http://localhost:8000/searchuser/${searchTerm}`);
-      if (response.data.user) {
-        console.log(response.data);
-        setSearchedUser(response.data.user[0]);
-        setIsSearchPerformed(true);
-      } else {
-        setSearchedUser(null);
-        setIsSearchPerformed(false);
-      }
-    } catch (error) {
-      console.error('Error searching user:', error);
-      toast.error('Failed to search user! Please try again.');
-    }
-  };
-
-  useEffect(() => {
-    if (searchTerm.trim() !== '') {
-      searchUser();
+ const searchUser = useCallback(async () => {
+  try {
+    const response = await axios.get(`${baseUrl}/searchuser/${searchTerm}`);
+    if (response.data.user) {
+      console.log(response.data);
+      setSearchedUser(response.data.user[0]);
+      setIsSearchPerformed(true);
     } else {
-      fetchUserData();
+      setSearchedUser(null);
       setIsSearchPerformed(false);
     }
-  }, [currentPage, pageSize, searchTerm]);
+  } catch (error) {
+    console.error('Error searching user:', error);
+    toast.error('Failed to search user! Please try again.');
+  }
+}, [baseUrl, searchTerm]);
+
+useEffect(() => {
+  if (searchTerm.trim() !== '') {
+    searchUser();
+  } else {
+    fetchUserData();
+    setIsSearchPerformed(false);
+  }
+}, [currentPage, pageSize, searchTerm, fetchUserData, searchUser]);
 
   const handleButtonClick = () => {
     setLoading(true);
@@ -82,7 +84,7 @@ export default function UserManagement() {
 
   const handleBlockUnblock = async (userId: string) => {
     try {
-      const response = await axios.post(`http://localhost:8000/blockuser/${userId}`);
+      const response = await axios.post(`${baseUrl}/blockuser/${userId}`);
       if (response.data.success) {
         toast.success('Successfully blocked the account!');
         setUserData(prevUserData =>

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import React from 'react'
 
 export default function Pricing() {
@@ -35,7 +36,7 @@ export default function Pricing() {
                 className="w-10 h-10 text-gray-600"
                 viewBox="0 0 24 24"
                 strokeLinecap="round"
-                strokeLidth="2"
+                strokeWidth="2"
               >
                 <path
                   d="M12,7L12,7 c-1.657,0-3-1.343-3-3v0c0-1.657,1.343-3,3-3h0c1.657,0,3,1.343,3,3v0C15,5.657,13.657,7,12,7z"
@@ -59,7 +60,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -85,7 +86,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -110,7 +111,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -155,7 +156,7 @@ export default function Pricing() {
                 className="w-10 h-10 text-deep-purple-accent-400"
                 viewBox="0 0 24 24"
                 strokeLinecap="round"
-                strokeLidth="2"
+                strokeWidth="2"
               >
                 <path
                   d="M4,7L4,7 C2.895,7,2,6.105,2,5v0c0-1.105,0.895-2,2-2h0c1.105,0,2,0.895,2,2v0C6,6.105,5.105,7,4,7z"
@@ -199,7 +200,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -223,7 +224,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -249,7 +250,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -273,7 +274,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"
@@ -297,7 +298,7 @@ export default function Pricing() {
                     className="w-4 h-4 text-deep-purple-accent-400"
                     viewBox="0 0 24 24"
                     strokeLinecap="round"
-                    strokeLidth="2"
+                    strokeWidth="2"
                   >
                     <polyline
                       fill="none"

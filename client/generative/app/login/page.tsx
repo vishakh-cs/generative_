@@ -9,6 +9,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import useStore from '@/Stores/store';
 import { parseCookies } from 'nookies';
+import Image from 'next/image';
 
 
 interface LoginProps { }
@@ -16,6 +17,7 @@ interface LoginProps { }
 const Login: React.FC<LoginProps> = () => {
 	const cookies = parseCookies();
 	const isLoggedIn = !!cookies.token;
+	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [WorkspaceId, setWorkspaceId] = useState<string | null>(null);
 	const [collabWorkspace, setCollabWorkspace] = useState<any>(null);
@@ -40,7 +42,7 @@ const Login: React.FC<LoginProps> = () => {
 			router.push(`/home/${userId}/${WorkspaceId}`);
 		}
 		setLoading(false)
-	}, [status, WorkspaceId, router]);
+	}, [status, WorkspaceId, router, userId]);
 
 
 	// if the googleLogin user has workspace
@@ -48,7 +50,7 @@ const Login: React.FC<LoginProps> = () => {
 		const checkWorkspace = async () => {
 			if (session?.user) {
 				try {
-					const userInfo = await axios.post('http://localhost:8000/checkHaveWorkspace', {
+					const userInfo = await axios.post(`${baseUrl}/checkHaveWorkspace`, {
 						email: session.user.email,
 					});
 					if (userInfo.data.token) {
@@ -74,7 +76,7 @@ const Login: React.FC<LoginProps> = () => {
 		};
 
 		checkWorkspace();
-	}, [session, router, setCollaboratorWorkspace, setUserEmail]);
+	}, [session, router, setCollaboratorWorkspace, setUserEmail, baseUrl]);
 
 
 	const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -94,7 +96,7 @@ const Login: React.FC<LoginProps> = () => {
 		}
 
 		try {
-			const response = await axios.post('http://localhost:8000/login', {
+			const response = await axios.post(`${baseUrl}/login`, {
 				email: email,
 				password: password,
 			});
@@ -152,11 +154,13 @@ const Login: React.FC<LoginProps> = () => {
 
 		<section className="flex flex-col md:flex-row h-screen items-center">
 			<div className="bg-indigo-600 hidden lg:block w-full md:w-1/2 xl:w-2/3 h-screen">
-				<img
-					src="https://source.unsplash.com/random/?network"
-					alt=""
-					className="w-full h-full object-cover"
-				/>
+			<Image
+                    src={`https://source.unsplash.com/random/?tech&q=100&t=${Date.now()}`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    width={500}
+                    height={500}
+                />
 			</div>
 
 			<div className="bg-white  dark:bg-gray-800 w-full md:max-w-md lg:max-w-full md:mx-auto md:mx-0 md:w-1/2 xl:w-1/3 h-screen px-6 lg:px-16 xl:px-12 flex items-center justify-center">

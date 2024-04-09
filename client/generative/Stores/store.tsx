@@ -25,6 +25,7 @@ interface StoreState {
   isWorkspaceNameChanged: boolean; 
   removeCollabTrigger:boolean;
   darkMode: boolean;
+  isPageClick: boolean;
 }
 
 interface StoreActions {
@@ -44,46 +45,55 @@ interface StoreActions {
   setWorkspaceNameChange(changed: boolean): void;
   setRemoveCollabTrigger(trigger: boolean): void;
   setDarkMode: (darkMode: boolean) => void;
+  setIsPageClick: (isPageClick: boolean) => void;
 
 }
 
-export const useStore = create<StoreState & StoreActions>((set) => ({
-  userID: localStorage.getItem('USER_ID') || null, 
-  userEmail: '',
-  profileImage:'',
-  user_data: {},
-  isLogoutClicked: false,
-  workspaceName: '',
-  isProfileClicked: false,
-  otherWorkspaceId: '',
-  workspaceId: '',
-  workspaceType:'',
-  collaboratorWorkspace: null,
-  isPageRestored: false,
-  isWorkspaceNameChanged: false,
-  removeCollabTrigger: false,
-  darkMode: JSON.parse(localStorage.getItem('darkmode') as string),
- 
-  setUserID: (userId) => set({ userID: userId }),
-  setUserEmail: (email) => set({ userEmail:  email.toLowerCase() }),
-  setProfileImage:(img)=> set({ profileImage: img}),
-  setUserData: (data) => set({ user_data: data }),
+export const useStore = create<StoreState & StoreActions>((set) => {
+  // Check if localStorage is available
+  const localStorageAvailable = typeof window !== 'undefined' && window.localStorage;
 
-  setLogoutClicked: (value) => set({ isLogoutClicked: value }),
-  resetLogoutClicked: () => set({ isLogoutClicked: false }),
-  
-  setWorkspaceName: (name) => set({ workspaceName: name }),
-  resetWorkspaceName: () => set({ workspaceName: '' }),
+  return {
+    userID: localStorageAvailable ? localStorage.getItem('USER_ID') || null : null,
+    userEmail: '',
+    profileImage: '',
+    user_data: {},
+    isLogoutClicked: false,
+    workspaceName: '',
+    isProfileClicked: false,
+    otherWorkspaceId: '',
+    workspaceId: '',
+    workspaceType: '',
+    collaboratorWorkspace: null,
+    isPageRestored: false,
+    isWorkspaceNameChanged: false,
+    removeCollabTrigger: false,
+    darkMode: localStorageAvailable ? JSON.parse(localStorage.getItem('darkmode') as string) : false,
+    isPageClick: false,
 
-  setOtherWorkspaceId : (id) => set({ otherWorkspaceId: id }),
-  setWorkspaceId: (id) => set({ workspaceId: id }),
-  setWorkspaceType: (type) => set({ workspaceType: type }),
-  setCollaboratorWorkspace: (collabWorkspace) => set({ collaboratorWorkspace: collabWorkspace }),
-  setPageRestored: (restored) => set({ isPageRestored: restored }),
+    setUserID: (userId) => set({ userID: userId }),
+    setUserEmail: (email) => set({ userEmail: email.toLowerCase() }),
+    setProfileImage: (img) => set({ profileImage: img }),
+    setUserData: (data) => set({ user_data: data }),
 
-  setWorkspaceNameChange: (changed) => set({isWorkspaceNameChanged: changed}),
-  setRemoveCollabTrigger: (trigger) => set({removeCollabTrigger: trigger}),
-  setDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
-}));
+    setLogoutClicked: (value) => set({ isLogoutClicked: value }),
+    resetLogoutClicked: () => set({ isLogoutClicked: false }),
+
+    setWorkspaceName: (name) => set({ workspaceName: name }),
+    resetWorkspaceName: () => set({ workspaceName: '' }),
+
+    setOtherWorkspaceId: (id) => set({ otherWorkspaceId: id }),
+    setWorkspaceId: (id) => set({ workspaceId: id }),
+    setWorkspaceType: (type) => set({ workspaceType: type }),
+    setCollaboratorWorkspace: (collabWorkspace) => set({ collaboratorWorkspace: collabWorkspace }),
+    setPageRestored: (restored) => set({ isPageRestored: restored }),
+
+    setWorkspaceNameChange: (changed) => set({ isWorkspaceNameChanged: changed }),
+    setRemoveCollabTrigger: (trigger) => set({ removeCollabTrigger: trigger }),
+    setDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+    setIsPageClick: () => set((state) => ({ isPageClick: true })),
+  };
+});
+
 
 export default useStore;

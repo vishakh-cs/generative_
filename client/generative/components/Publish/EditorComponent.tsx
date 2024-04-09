@@ -5,7 +5,6 @@ import YPartyKitProvider from "y-partykit/provider";
 import {
   useCreateBlockNote,
   BlockNoteView,
-  ReactSlashMenuItem,
   getDefaultReactSlashMenuItems,
   DefaultReactSuggestionItem,
   SuggestionMenuController,
@@ -57,7 +56,7 @@ export const EditorComponentPreview = ({
   );
 }
 
-function BlockNote({ doc, provider, pageId }: EditorProps) {
+function BlockNote({ doc, provider, pageId }: { doc: Y.Doc, provider: any, pageId: string }) {
   const currentUser = useSelf();
 
   const { complete } = useCompletion({
@@ -130,7 +129,7 @@ function BlockNote({ doc, provider, pageId }: EditorProps) {
     ...getDefaultReactSlashMenuItems(editor),
   ];
 
-  const user = useStore(state => state.user_data.name); 
+  const userName = useStore(state => state.user_data.name); 
   const { theme, setTheme } = useTheme();
   let mode: "dark" | "light" = "dark";
   if (theme === "light") {
@@ -142,7 +141,8 @@ function BlockNote({ doc, provider, pageId }: EditorProps) {
       provider,
       fragment: doc.getXmlFragment(pageId),
       user: {
-        name: user?.fullname as string,
+        name: userName as string,
+        color: ''
       },
     },
   });

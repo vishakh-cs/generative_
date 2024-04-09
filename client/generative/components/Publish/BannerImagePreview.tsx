@@ -13,6 +13,14 @@ interface BannerImageProps {
   pageId: string;
 }
 
+interface WorkspaceData {
+  user: any;
+  page: {
+     PageBannerImage?: string;
+     PageBannarImage?: string; 
+  };
+ }
+
 const loader = ({ src, width, quality }: { src: string; width?: number; quality?: number }) => {
   if (src.startsWith('/')) {
     return src;
@@ -30,6 +38,8 @@ const loader = ({ src, width, quality }: { src: string; width?: number; quality?
 
 
 const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId }) => {
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -46,12 +56,13 @@ const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId })
   console.log("pageId",pageId);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:8000');
+    const newSocket = io(`${baseUrl}`);
     setSocket(newSocket);
-
-    // Clean up the connection on component unmount
-    return () => newSocket.disconnect();
-  }, []);
+    return () => {
+      newSocket.disconnect();
+      setSocket(null); 
+    };
+  }, [baseUrl]);
 
   useEffect(() => {
     if (socket) {
@@ -72,7 +83,7 @@ const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId })
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/workspace/${workspaceId}/${pageId}`);
+        const response = await axios.get(`${baseUrl}/workspace/${workspaceId}/${pageId}`);
         setUserData(response.data.user);
         setWorkspace(response.data);
         store.setUserData(response.data.user)
@@ -83,6 +94,7 @@ const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId })
     };
 
     fetchWorkspace();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, forceUpdate,trigger]);
 
   const handleAddBannerClick = () => {
@@ -122,7 +134,7 @@ const BannerImagePreview: React.FC<BannerImageProps> = ({ workspaceId, pageId })
         });
 
         // Fetch updated workspace data with the new image URL
-        const updatedWorkspace = await axios.post('http://localhost:8000/BannerImageURL', {
+        const updatedWorkspace = await axios.post(`${baseUrl}/BannerImageURL`, {
           workspaceId,
           pageId,
           imageUrl: res.url,

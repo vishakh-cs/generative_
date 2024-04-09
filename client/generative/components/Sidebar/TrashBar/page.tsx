@@ -27,6 +27,8 @@ interface TrashBarProps {
     workspaceId: string;
 }
 const TrashBar: React.FC<TrashBarProps> = ({ workspaceId }) => {
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     const [trashedPages, setTrashedPages] = useState<TrashBar[]>([]);
     const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
     const setPageRestored = useStore((state) => state.setPageRestored);
@@ -34,7 +36,7 @@ const TrashBar: React.FC<TrashBarProps> = ({ workspaceId }) => {
 
     const fetchTrashedPages = async () => {
         try {
-            const response = await axios.get<TrashBar[]>(`http://localhost:8000/trashedData/${workspaceId}`);
+            const response = await axios.get<TrashBar[]>(`${baseUrl}/trashedData/${workspaceId}`);
             setTrashedPages(response.data);
         } catch (error) {
             console.error('Error fetching trashed pages:', error);
@@ -43,11 +45,12 @@ const TrashBar: React.FC<TrashBarProps> = ({ workspaceId }) => {
 
     useEffect(() => {
         fetchTrashedPages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workspaceId]);
 
-    const RestorePage = async (pageId) => {
+    const RestorePage = async (pageId :string) => {
         try {
-            const res = await axios.post(`http://localhost:8000/RestorePage/${pageId}`);
+            const res = await axios.post(`${baseUrl}/RestorePage/${pageId}`);
             if (res.data.success) {
                 toast.success("Successfully restored page!");
                 setPageRestored(true);
@@ -67,7 +70,7 @@ const TrashBar: React.FC<TrashBarProps> = ({ workspaceId }) => {
 
    // Function to delete a page
    const deletePage = (pageId: string) => {
-    const deletePagePromise = axios.delete(`http://localhost:8000/deletePage/${pageId}`);
+    const deletePagePromise = axios.delete(`${baseUrl}/deletePage/${pageId}`);
 
     toast.promise(
         deletePagePromise,
